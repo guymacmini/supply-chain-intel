@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Monitor - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<h1>News Monitoring</h1>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h2>Run Monitoring Scan</h2>
+        </div>
+        <p style="color: var(--gray-600); margin-bottom: 1rem;">
+            Scan news sources for updates on your watchlist entities and active thesis triggers.
+        </p>
+        <button id="run-monitor-btn" class="btn btn-primary">
+            Run Monitoring Scan
+        </button>
+        <div id="monitor-status" style="margin-top: 1rem; display: none;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Digests</h2>
+        </div>
+        {% if digests %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Digest</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for digest in digests %}
+                <tr>
+                    <td>{{ digest.date }}</td>
+                    <td>
+                        <a href="/digest/{{ digest.name }}" class="btn btn-sm btn-secondary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📰</div>
+            <p>No digests yet. Run your first monitoring scan!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="result-card" class="card" style="display: none;">
+    <div class="card-header">
+        <h2>Latest Digest</h2>
+        <a href="#" id="view-full-link" class="btn btn-sm btn-secondary">View Full Document</a>
+    </div>
+    <div id="result-content" class="doc-content"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('run-monitor-btn').addEventListener('click', async function() {
+    const btn = this;
+    const status = document.getElementById('monitor-status');
+    const resultCard = document.getElementById('result-card');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Scanning...';
+    status.style.display = 'block';
+    status.innerHTML = '<div class="loading"><span class="spinner"></span> Running monitoring scan (this may take a few minutes)...</div>';
+    resultCard.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/monitor', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            status.innerHTML = '<div class="alert alert-success">Monitoring scan complete!</div>';
+            resultCard.style.display = 'block';
+            document.getElementById('result-content').innerHTML = data.content.replace(/\n/g, '<br>');
+            document.getElementById('view-full-link').href = '/digest/' + data.path.split('/').pop();
+            // Reload page after 2 seconds to update the list
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            status.innerHTML = '<div class="alert alert-error">Error: ' + data.error + '</div>';
+        }
+    } catch (error) {
+        status.innerHTML = '<div class="alert alert-error">Error: ' + error.message + '</div>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Run Monitoring Scan';
+});
+</script>
+{% endblock %}

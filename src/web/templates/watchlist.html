@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Watchlist - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<h1>Watchlist</h1>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h2>Add Entity</h2>
+        </div>
+        <form id="add-form">
+            <div class="form-group">
+                <label for="ticker">Ticker Symbol</label>
+                <input type="text" id="ticker" name="ticker" placeholder="e.g., NVDA" required>
+            </div>
+            <div class="form-group">
+                <label for="name">Company Name (optional)</label>
+                <input type="text" id="name" name="name" placeholder="e.g., NVIDIA Corporation">
+            </div>
+            <div class="form-group">
+                <label for="themes">Themes (comma-separated)</label>
+                <input type="text" id="themes" name="themes" placeholder="e.g., AI, semiconductors, data centers">
+            </div>
+            <button type="submit" class="btn btn-primary">Add to Watchlist</button>
+        </form>
+        <div id="add-status" style="margin-top: 1rem; display: none;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Current Watchlist</h2>
+            <span class="badge badge-info">{{ entities|length }} entities</span>
+        </div>
+        {% if entities %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Name</th>
+                    <th>Themes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="watchlist-table">
+                {% for entity in entities %}
+                <tr id="row-{{ entity.ticker }}">
+                    <td><strong>{{ entity.ticker }}</strong></td>
+                    <td>{{ entity.name }}</td>
+                    <td>
+                        {% for theme in entity.themes %}
+                        <span class="badge badge-info" style="margin-right: 0.25rem;">{{ theme }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="removeEntity('{{ entity.ticker }}')">Remove</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">👀</div>
+            <p>No entities in watchlist. Add your first entity to monitor!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('add-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const status = document.getElementById('add-status');
+    const themes = document.getElementById('themes').value;
+
+    try {
+        const response = await fetch('/api/watchlist', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                ticker: document.getElementById('ticker').value,
+                name: document.getElementById('name').value,
+                themes: themes ? themes.split(',').map(t => t.trim()) : []
+            })
+        });
+
+        const data = await response.json();
+        status.style.display = 'block';
+
+        if (data.success) {
+            status.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+            document.getElementById('add-form').reset();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            status.innerHTML = '<div class="alert alert-error">' + data.message + '</div>';
+        }
+    } catch (error) {
+        status.style.display = 'block';
+        status.innerHTML = '<div class="alert alert-error">Error: ' + error.message + '</div>';
+    }
+});
+
+async function removeEntity(ticker) {
+    if (!confirm('Remove ' + ticker + ' from watchlist?')) return;
+
+    try {
+        const response = await fetch('/api/watchlist/' + ticker, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('row-' + ticker).remove();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+{% endblock %}

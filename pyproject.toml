@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supply-chain-intel"
+version = "1.0.0"
+description = "Investment research platform for discovering second and third-order market opportunities"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "click>=8.0.0",
+    "python-dateutil>=2.8.0",
+    "pyyaml>=6.0",
+    "schedule>=1.2.0",
+    "python-frontmatter>=1.0.0",
+    "flask>=3.0.0",
+    "markdown>=3.5.0",
+    "finnhub-python>=1.4.0",
+    "tavily-python>=0.3.0",
+]
+
+[project.scripts]
+supply-chain-intel = "src.main:cli"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

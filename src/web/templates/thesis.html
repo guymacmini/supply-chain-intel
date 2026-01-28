@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Thesis - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<h1>Investment Theses</h1>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h2>Create New Thesis</h2>
+        </div>
+        <form id="thesis-form">
+            <div class="form-group">
+                <label for="statement">Investment Thesis Statement</label>
+                <textarea id="statement" name="statement"
+                          placeholder='e.g., "I think VRT is undervalued because AI data center demand is accelerating faster than expected and they have 35% market share in thermal management."'
+                          required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" id="thesis-btn">
+                Validate Thesis
+            </button>
+        </form>
+        <div id="thesis-status" style="margin-top: 1rem; display: none;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Your Theses</h2>
+        </div>
+        {% if theses %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Confidence</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for thesis in theses %}
+                <tr>
+                    <td>{{ thesis.id[:25] }}{% if thesis.id|length > 25 %}...{% endif %}</td>
+                    <td>
+                        {% if thesis.status == 'active' %}
+                        <span class="badge badge-info">Active</span>
+                        {% elif thesis.status == 'confirmed' %}
+                        <span class="badge badge-success">Confirmed</span>
+                        {% elif thesis.status == 'refuted' %}
+                        <span class="badge badge-danger">Refuted</span>
+                        {% else %}
+                        <span class="badge">{{ thesis.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ thesis.confidence }}%</td>
+                    <td>
+                        <a href="/thesis/{{ thesis.path }}" class="btn btn-sm btn-secondary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <p>No theses yet. Create your first investment thesis!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="result-card" class="card" style="display: none;">
+    <div class="card-header">
+        <h2>Thesis Validation Results</h2>
+        <a href="#" id="view-full-link" class="btn btn-sm btn-secondary">View Full Document</a>
+    </div>
+    <div id="result-content" class="doc-content"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('thesis-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('thesis-btn');
+    const status = document.getElementById('thesis-status');
+    const resultCard = document.getElementById('result-card');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Validating...';
+    status.style.display = 'block';
+    status.innerHTML = '<div class="loading"><span class="spinner"></span> Validating thesis (this may take up to 60 seconds)...</div>';
+    resultCard.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/thesis', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                statement: document.getElementById('statement').value
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            status.innerHTML = '<div class="alert alert-success">Thesis validated!</div>';
+            resultCard.style.display = 'block';
+            document.getElementById('result-content').innerHTML = data.content.replace(/\n/g, '<br>');
+            document.getElementById('view-full-link').href = '/thesis/' + data.path.split('/').pop();
+            // Reload page after 2 seconds to update the list
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            status.innerHTML = '<div class="alert alert-error">Error: ' + data.error + '</div>';
+        }
+    } catch (error) {
+        status.innerHTML = '<div class="alert alert-error">Error: ' + error.message + '</div>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Validate Thesis';
+});
+</script>
+{% endblock %}

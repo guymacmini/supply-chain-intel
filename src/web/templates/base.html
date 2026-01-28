@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Supply Chain Intel{% endblock %}</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--gray-900);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray-300);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: white;
+            background: var(--gray-700);
+        }
+
+        /* Main content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 120px);
+        }
+
+        h1 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--gray-800);
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 0.375rem;
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        th {
+            font-weight: 600;
+            color: var(--gray-600);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 9999px;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stats */
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid var(--gray-300);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-600);
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* Document content */
+        .doc-content {
+            line-height: 1.8;
+        }
+
+        .doc-content h1 {
+            font-size: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .doc-content h2 {
+            font-size: 1.25rem;
+            margin-top: 1.25rem;
+        }
+
+        .doc-content h3 {
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .doc-content table {
+            margin: 1rem 0;
+        }
+
+        .doc-content code {
+            background: var(--gray-100);
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .doc-content pre {
+            background: var(--gray-800);
+            color: var(--gray-100);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .doc-content pre code {
+            background: transparent;
+            padding: 0;
+        }
+
+        .doc-content ul, .doc-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-600);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--gray-100);
+            padding: 1rem 0;
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="/" class="logo">Supply Chain <span>Intel</span></a>
+            <ul class="nav-links">
+                <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Dashboard</a></li>
+                <li><a href="/explore" {% if '/explore' in request.path %}class="active"{% endif %}>Explore</a></li>
+                <li><a href="/thesis" {% if '/thesis' in request.path %}class="active"{% endif %}>Thesis</a></li>
+                <li><a href="/monitor" {% if '/monitor' in request.path %}class="active"{% endif %}>Monitor</a></li>
+                <li><a href="/watchlist" {% if '/watchlist' in request.path %}class="active"{% endif %}>Watchlist</a></li>
+                <li><a href="/history" {% if '/history' in request.path %}class="active"{% endif %}>History</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            Supply Chain Intel - Investment Research Platform
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

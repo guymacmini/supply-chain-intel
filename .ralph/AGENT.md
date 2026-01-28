@@ -1,49 +1,92 @@
 # Agent Build Instructions
 
 ## Project Setup
-```bash
-# Install dependencies (example for Node.js project)
-npm install
 
-# Or for Python project
+### Quick Setup (Recommended)
+```bash
+# One-time setup (handles everything)
+./setup.sh
+```
+
+This will:
+- Check Python 3.11+ is installed
+- Create virtual environment
+- Install all dependencies
+- Prompt for Anthropic API key
+- Create .env file securely
+
+### Manual Setup
+```bash
+# Install dependencies
 pip install -r requirements.txt
 
-# Or for Rust project  
-cargo build
+# Or install in development mode
+pip install -e .
+
+# Configure API key
+echo "ANTHROPIC_API_KEY=your_key" > .env
+chmod 600 .env
+```
+
+## Running the Application
+
+### Using run.sh (Simple)
+```bash
+# Explore investment themes
+./run.sh explore "AI infrastructure"
+
+# Create thesis
+./run.sh thesis create "Your thesis..."
+
+# Run monitoring
+./run.sh monitor
+
+# Manage watchlist
+./run.sh watchlist list
+./run.sh watchlist add NVDA --theme AI
+```
+
+### Using Make Commands (Even Simpler)
+```bash
+# Show all available commands
+make help
+
+# Common operations
+make explore QUERY="AI infrastructure"
+make thesis TEXT="Your investment thesis"
+make monitor
+make watchlist
+make test
 ```
 
 ## Running Tests
 ```bash
-# Node.js
-npm test
+# Using make
+make test
 
-# Python
-pytest
+# Or directly
+source venv/bin/activate && pytest
 
-# Rust
-cargo test
+# With coverage
+pytest --cov=src tests/
 ```
 
-## Build Commands
+## Development Commands
 ```bash
-# Production build
-npm run build
-# or
-cargo build --release
-```
+# Clean up environment
+make clean
 
-## Development Server
-```bash
-# Start development server
-npm run dev
-# or
-cargo run
+# Run specific test file
+./run.sh pytest tests/test_models.py -v
 ```
 
 ## Key Learnings
-- Update this section when you learn new build optimizations
-- Document any gotchas or special setup requirements
-- Keep track of the fastest test/build cycle
+- **Python 3.11+** required for the project
+- Use `./setup.sh` for first-time setup to handle all dependencies and configuration
+- Use `./run.sh` wrapper to avoid manually activating venv
+- Use `make` commands for common operations (explore, thesis, monitor)
+- API key is stored in `.env` file (gitignored for security)
+- All data outputs go to `data/` directory (research, theses, digests)
 
 ## Feature Development Quality Standards
 

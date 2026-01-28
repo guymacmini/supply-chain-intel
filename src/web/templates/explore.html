@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Explore - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<h1>Explore Investment Themes</h1>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h2>New Exploration</h2>
+        </div>
+        <form id="explore-form">
+            <div class="form-group">
+                <label for="query">Theme, Company, or Market</label>
+                <input type="text" id="query" name="query"
+                       placeholder='e.g., "AI infrastructure", "ASML", "renewable energy"'
+                       required>
+            </div>
+            <div class="form-group">
+                <label for="depth">Analysis Depth</label>
+                <select id="depth" name="depth">
+                    <option value="1">1 - Quick scan</option>
+                    <option value="2" selected>2 - Standard analysis</option>
+                    <option value="3">3 - Deep dive</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" id="explore-btn">
+                Run Exploration
+            </button>
+        </form>
+        <div id="explore-status" style="margin-top: 1rem; display: none;"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Research</h2>
+        </div>
+        {% if research_files %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in research_files[:10] %}
+                <tr>
+                    <td>{{ file.name }}</td>
+                    <td>
+                        <a href="/research/{{ file.name }}" class="btn btn-sm btn-secondary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <p>No research documents yet. Run your first exploration!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="result-card" class="card" style="display: none;">
+    <div class="card-header">
+        <h2>Exploration Results</h2>
+        <a href="#" id="view-full-link" class="btn btn-sm btn-secondary">View Full Document</a>
+    </div>
+    <div id="result-content" class="doc-content"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('explore-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('explore-btn');
+    const status = document.getElementById('explore-status');
+    const resultCard = document.getElementById('result-card');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Exploring...';
+    status.style.display = 'block';
+    status.innerHTML = '<div class="loading"><span class="spinner"></span> Running exploration (this may take up to 60 seconds)...</div>';
+    resultCard.style.display = 'none';
+
+    try {
+        const response = await fetch('/api/explore', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                query: document.getElementById('query').value,
+                depth: parseInt(document.getElementById('depth').value)
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            status.innerHTML = '<div class="alert alert-success">Exploration complete!</div>';
+            resultCard.style.display = 'block';
+            document.getElementById('result-content').innerHTML = data.content.replace(/\n/g, '<br>');
+            document.getElementById('view-full-link').href = '/research/' + data.path.split('/').pop();
+        } else {
+            status.innerHTML = '<div class="alert alert-error">Error: ' + data.error + '</div>';
+        }
+    } catch (error) {
+        status.innerHTML = '<div class="alert alert-error">Error: ' + error.message + '</div>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Run Exploration';
+});
+</script>
+{% endblock %}

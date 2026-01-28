@@ -1,0 +1,6 @@
+{
+  "tier1_financial": ["reuters.com", "bloomberg.com", "wsj.com", "ft.com"],
+  "tier2_industry": ["semiconductorengineering.com", "datacenterdynamics.com"],
+  "tier3_filings": ["sec.gov/edgar"],
+  "tier4_analysis": ["seekingalpha.com"]
+}

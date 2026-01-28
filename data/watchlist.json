@@ -1,0 +1,239 @@
+{
+  "entities": [
+    {
+      "ticker": "LOW",
+      "name": "LOW",
+      "themes": [
+        "ai_infra"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "ai_infra_20260128.md"
+    },
+    {
+      "ticker": "HIGH",
+      "name": "HIGH",
+      "themes": [
+        "ai_infra"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "ai_infra_20260128.md"
+    },
+    {
+      "ticker": "MSCI",
+      "name": "MSCI",
+      "themes": [
+        "crypto_trading"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "crypto_trading_20260128.md"
+    },
+    {
+      "ticker": "AMD",
+      "name": "AMD",
+      "themes": [
+        "crypto_trading"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "crypto_trading_20260128.md"
+    },
+    {
+      "ticker": "TSMC",
+      "name": "TSMC",
+      "themes": [
+        "crypto_trading"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "crypto_trading_20260128.md"
+    },
+    {
+      "ticker": "ETF",
+      "name": "ETF",
+      "themes": [
+        "crypto_trading"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "crypto_trading_20260128.md"
+    },
+    {
+      "ticker": "U",
+      "name": "U",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "ETHE",
+      "name": "ETHE",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "IBIT",
+      "name": "IBIT",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "PYPL",
+      "name": "PYPL",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "FBTC",
+      "name": "FBTC",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "IPO",
+      "name": "IPO",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "CME",
+      "name": "CME",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "GBTC",
+      "name": "GBTC",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "ESG",
+      "name": "ESG",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "USDC",
+      "name": "USDC",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "S",
+      "name": "S",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "CFTC",
+      "name": "CFTC",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "MARA",
+      "name": "MARA",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "MSTR",
+      "name": "MSTR",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "RIOT",
+      "name": "RIOT",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "EU",
+      "name": "EU",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "USDT",
+      "name": "USDT",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "UAE",
+      "name": "UAE",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "RWA",
+      "name": "RWA",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "OCC",
+      "name": "OCC",
+      "themes": [
+        "thesis_crypto_trading_going_20260128"
+      ],
+      "added_date": "2026-01-28",
+      "source_research": "theses/active/crypto_trading_going_20260128.md"
+    }
+  ],
+  "last_updated": "2026-01-28T16:54:46.975115"
+}

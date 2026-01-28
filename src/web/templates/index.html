@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="grid grid-4">
+    <div class="card stat-card">
+        <div class="stat-value">{{ watchlist_count }}</div>
+        <div class="stat-label">Watchlist Entities</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">{{ thesis_count }}</div>
+        <div class="stat-label">Investment Theses</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">{{ research_count }}</div>
+        <div class="stat-label">Research Documents</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">{{ digest_count }}</div>
+        <div class="stat-label">Monitoring Digests</div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">
+            <h2>Quick Actions</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <a href="/explore" class="btn btn-primary" style="justify-content: center;">
+                Explore New Theme
+            </a>
+            <a href="/thesis" class="btn btn-primary" style="justify-content: center;">
+                Create Investment Thesis
+            </a>
+            <a href="/monitor" class="btn btn-secondary" style="justify-content: center;">
+                Run Monitoring Scan
+            </a>
+            <a href="/watchlist" class="btn btn-secondary" style="justify-content: center;">
+                Manage Watchlist
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>About</h2>
+        </div>
+        <p style="color: var(--gray-600); margin-bottom: 1rem;">
+            Supply Chain Intel helps fundamental investors identify non-obvious investment
+            opportunities by discovering second and third-order market dependencies.
+        </p>
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin: 1rem 0 0.5rem;">Features:</h3>
+        <ul style="color: var(--gray-600); margin-left: 1.25rem;">
+            <li><strong>Explore</strong> - Discover hidden investment opportunities</li>
+            <li><strong>Thesis</strong> - Validate investment hypotheses</li>
+            <li><strong>Monitor</strong> - Track news for your watchlist</li>
+            <li><strong>Watchlist</strong> - Manage entities to monitor</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

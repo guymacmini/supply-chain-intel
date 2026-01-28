@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h1>{{ title }}</h1>
+    <div>
+        {% if doc_type == 'research' %}
+        <a href="/explore" class="btn btn-secondary">Back to Explore</a>
+        {% elif doc_type == 'thesis' %}
+        <a href="/thesis" class="btn btn-secondary">Back to Theses</a>
+        {% elif doc_type == 'digest' %}
+        <a href="/monitor" class="btn btn-secondary">Back to Monitor</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if doc_type == 'research' %}
+<!-- Related Research Section -->
+{% if related_research %}
+<div class="card" style="margin-bottom: 1.5rem; background: var(--gray-50);">
+    <h2 style="font-size: 1rem; margin-bottom: 0.75rem;">Related Research</h2>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        {% for doc in related_research %}
+        <a href="/research/{{ doc.name }}" class="btn btn-sm {% if doc.type == 'parent' %}btn-primary{% else %}btn-secondary{% endif %}">
+            {% if doc.type == 'parent' %}
+            <span style="margin-right: 0.25rem;">↩</span>
+            {% else %}
+            <span style="margin-right: 0.25rem;">↪</span>
+            {% endif %}
+            {{ doc.label }}: {{ doc.name[:40] }}{% if doc.name|length > 40 %}...{% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Follow-up Question Section -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <h2 style="font-size: 1rem; margin-bottom: 0.75rem;">Ask Follow-up Question</h2>
+    <form id="followup-form">
+        <div class="form-group">
+            <textarea id="followup-question" name="question" rows="2"
+                placeholder="What would you like to explore further about this research? E.g., 'What are the risks to the bullish scenario?' or 'Explore the supply chain for Company X in more detail'"
+                style="width: 100%; padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 0.375rem; font-size: 0.875rem;"></textarea>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button type="submit" class="btn btn-primary" id="followup-btn">
+                Analyze Follow-up
+            </button>
+            <div class="loading" id="followup-loading" style="display: none;">
+                <span class="spinner"></span>
+                <span>Analyzing...</span>
+            </div>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="doc-content">
+        {{ content|safe }}
+    </div>
+</div>
+
+{% if doc_type == 'research' %}
+<div id="followup-result" style="display: none;" class="card">
+    <div class="card-header">
+        <h2>Follow-up Analysis</h2>
+        <a href="#" id="view-followup" class="btn btn-sm btn-primary">View Full Document</a>
+    </div>
+    <div id="followup-content" class="doc-content"></div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if doc_type == 'research' %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.getElementById('followup-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const question = document.getElementById('followup-question').value;
+    if (!question.trim()) {
+        alert('Please enter a follow-up question');
+        return;
+    }
+
+    const submitBtn = document.getElementById('followup-btn');
+    const loading = document.getElementById('followup-loading');
+
+    submitBtn.disabled = true;
+    loading.style.display = 'flex';
+
+    try {
+        const response = await fetch('/api/research/followup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename: '{{ filename }}',
+                question: question
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('followup-result').style.display = 'block';
+            document.getElementById('followup-content').innerHTML = marked.parse(data.content);
+            document.getElementById('view-followup').href = '/research/' + data.filename;
+            document.getElementById('followup-question').value = '';
+
+            // Scroll to result
+            document.getElementById('followup-result').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            alert('Error: ' + data.error);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        loading.style.display = 'none';
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

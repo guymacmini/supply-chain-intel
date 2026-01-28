@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Environment variables (contains secrets)
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Data (optional - uncomment if you want to ignore data files)
+# data/research/
+# data/theses/
+# data/digests/

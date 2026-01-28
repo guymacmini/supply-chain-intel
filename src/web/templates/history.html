@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}History - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<h1>Document History</h1>
+
+<div class="card">
+    <div class="card-header">
+        <h2>All Documents</h2>
+        <span class="badge badge-info">{{ documents|length }} documents</span>
+    </div>
+    {% if documents %}
+    <table>
+        <thead>
+            <tr>
+                <th>Document</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in documents %}
+            <tr>
+                <td>
+                    {{ doc.name }}
+                    {% if doc.is_followup %}
+                    <span class="badge" style="background: #e0e7ff; color: #3730a3; margin-left: 0.5rem;">↪ Follow-up</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if doc.type == 'research' %}
+                    <span class="badge badge-info">Research</span>
+                    {% elif doc.type == 'thesis' %}
+                    <span class="badge badge-success">Thesis</span>
+                    {% elif doc.type == 'digest' %}
+                    <span class="badge badge-warning">Digest</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if doc.type == 'research' %}
+                    <a href="/research/{{ doc.name }}" class="btn btn-sm btn-secondary">View</a>
+                    {% elif doc.type == 'thesis' %}
+                    <a href="/thesis/{{ doc.name }}" class="btn btn-sm btn-secondary">View</a>
+                    {% elif doc.type == 'digest' %}
+                    <a href="/digest/{{ doc.name }}" class="btn btn-sm btn-secondary">View</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <p>No documents yet. Start by exploring a theme or creating a thesis!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
