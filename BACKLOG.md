@@ -88,15 +88,26 @@ Add ability to compare 2-3 research reports:
 - Export functionality placeholder for future enhancement
 - All functionality tested and working with real research data
 
-### 5. [feature] Watchlist & Saved Research
+### 5. [feature] Watchlist & Saved Research ✅
 **Impact**: Medium - track interesting opportunities  
 **Effort**: Medium  
-**Status**: TODO
+**Status**: DONE (2026-02-02)
 
-- Save research reports to a watchlist
-- Mark opportunities as "Interested" / "Passed" / "Tracking"
-- Add notes to saved research
-- Filter/sort watchlist by date, rating, sector
+- Save research reports to a watchlist ✅
+- Mark opportunities as "Interested" / "Passed" / "Tracking" ✅
+- Add notes to saved research ✅
+- Filter/sort watchlist by date, rating, sector ✅
+
+**IMPLEMENTATION DETAILS**: Complete saved research system with web interface:
+- Created `saved_research.html` template with full CRUD operations and filtering
+- Added "Save to Watchlist" button to research document view
+- Integrated with existing `SavedResearchStore` and `SavedResearch` models
+- Auto-extraction of tickers, sector, and TLDR from research content
+- Full API endpoints: GET/POST `/api/saved-research`, PUT/DELETE `/api/saved-research/{filename}`
+- Support for status tracking, ratings (1-5 stars), notes, and tags
+- Advanced filtering by status, tags, and sorting by multiple criteria
+- Responsive modal interface for editing saved items
+- All functionality tested on Flask server (port 5001) with successful CRUD operations
 
 ### 6. [export] Excel/CSV Export
 **Impact**: Medium - analysts want spreadsheet data  
@@ -171,6 +182,7 @@ Add dark mode toggle for late-night research sessions.
 - [test] End-to-End Test Suite ✅
 - [research] Enhanced Ticker Enrichment ✅
 - [ui] Research Comparison View ✅
+- [feature] Watchlist & Saved Research ✅
 - [analysis] Shortage/Bottleneck Severity Analyzer ✅
 - [analysis] Valuation Reality Check ✅  
 - [analysis] Demand Acceleration Scorer ✅
