@@ -3,127 +3,343 @@
 {% block title %}{{ title }} - Supply Chain Intel{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <h1>{{ title }}</h1>
+<div class="flex justify-between items-center mb-4">
     <div>
-        {% if doc_type == 'research' %}
-        <a href="/explore" class="btn btn-secondary">Back to Explore</a>
-        {% elif doc_type == 'thesis' %}
-        <a href="/thesis" class="btn btn-secondary">Back to Theses</a>
-        {% elif doc_type == 'digest' %}
-        <a href="/monitor" class="btn btn-secondary">Back to Monitor</a>
-        {% endif %}
-    </div>
-</div>
-
-{% if doc_type == 'research' %}
-<!-- Related Research Section -->
-{% if related_research %}
-<div class="card" style="margin-bottom: 1.5rem; background: var(--gray-50);">
-    <h2 style="font-size: 1rem; margin-bottom: 0.75rem;">Related Research</h2>
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        {% for doc in related_research %}
-        <a href="/research/{{ doc.name }}" class="btn btn-sm {% if doc.type == 'parent' %}btn-primary{% else %}btn-secondary{% endif %}">
-            {% if doc.type == 'parent' %}
-            <span style="margin-right: 0.25rem;">↩</span>
-            {% else %}
-            <span style="margin-right: 0.25rem;">↪</span>
-            {% endif %}
-            {{ doc.label }}: {{ doc.name[:40] }}{% if doc.name|length > 40 %}...{% endif %}
+        <a href="{% if doc_type == 'research' %}/explore{% elif doc_type == 'thesis' %}/thesis{% elif doc_type == 'digest' %}/monitor{% else %}/history{% endif %}" class="btn btn-ghost btn-sm mb-2">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
         </a>
-        {% endfor %}
+        <h1 style="margin-bottom: 0.5rem;">{{ title.replace('.md', '').replace('_', ' ').title()[:60] }}</h1>
+        <div class="flex gap-2 items-center">
+            <span class="badge {% if doc_type == 'research' %}badge-info{% elif doc_type == 'thesis' %}badge-success{% else %}badge-neutral{% endif %}">
+                {{ doc_type | capitalize }}
+            </span>
+            {% if related_research %}
+                {% for related in related_research[:3] %}
+                <a href="/research/{{ related.name }}" class="badge badge-warning" title="{{ related.name }}">
+                    {{ related.label }}
+                </a>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    <div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="copyToClipboard()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            Copy
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadMarkdown()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Download
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="printDocument()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+            </svg>
+            Print
+        </button>
     </div>
 </div>
-{% endif %}
 
-<!-- Follow-up Question Section -->
-<div class="card" style="margin-bottom: 1.5rem;">
-    <h2 style="font-size: 1rem; margin-bottom: 0.75rem;">Ask Follow-up Question</h2>
-    <form id="followup-form">
-        <div class="form-group">
-            <textarea id="followup-question" name="question" rows="2"
-                placeholder="What would you like to explore further about this research? E.g., 'What are the risks to the bullish scenario?' or 'Explore the supply chain for Company X in more detail'"
-                style="width: 100%; padding: 0.625rem; border: 1px solid var(--gray-300); border-radius: 0.375rem; font-size: 0.875rem;"></textarea>
+<div class="grid" style="grid-template-columns: 1fr 300px; gap: 1.5rem;">
+    <!-- Main Content -->
+    <div class="card">
+        <div class="doc-content" id="doc-content">
+            {{ content | safe }}
         </div>
-        <div style="display: flex; align-items: center; gap: 1rem;">
-            <button type="submit" class="btn btn-primary" id="followup-btn">
-                Analyze Follow-up
-            </button>
-            <div class="loading" id="followup-loading" style="display: none;">
-                <span class="spinner"></span>
-                <span>Analyzing...</span>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <!-- Follow-up Analysis (for research docs) -->
+        {% if doc_type == 'research' %}
+        <div class="card">
+            <div class="card-header">
+                <h2 style="font-size: 1rem;">Ask Follow-up</h2>
             </div>
+            <form id="followup-form">
+                <div class="form-group">
+                    <label for="followup-question">Follow-up Question</label>
+                    <textarea id="followup-question" name="question" rows="3" 
+                        placeholder="e.g., What happens if tariffs increase on Taiwan semiconductors?"
+                        required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="width: 100%;" id="followup-btn">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Analyze Follow-up
+                </button>
+            </form>
+            <div id="followup-status" class="mt-3" style="display: none;"></div>
         </div>
-    </form>
-</div>
-{% endif %}
+        {% endif %}
 
-<div class="card">
-    <div class="doc-content">
-        {{ content|safe }}
+        <!-- Table of Contents -->
+        <div class="card">
+            <div class="card-header">
+                <h2 style="font-size: 1rem;">Table of Contents</h2>
+            </div>
+            <nav id="toc" class="toc">
+                <!-- Generated by JS -->
+            </nav>
+        </div>
+
+        <!-- Related Research -->
+        {% if related_research %}
+        <div class="card">
+            <div class="card-header">
+                <h2 style="font-size: 1rem;">Related Research</h2>
+            </div>
+            <ul style="list-style: none;">
+                {% for related in related_research %}
+                <li style="margin-bottom: 0.75rem;">
+                    <a href="/research/{{ related.name }}" style="text-decoration: none; color: var(--gray-700);">
+                        <div class="flex gap-2 items-center">
+                            <span class="badge {% if related.type == 'parent' %}badge-success{% else %}badge-warning{% endif %}">
+                                {{ related.label }}
+                            </span>
+                        </div>
+                        <div class="text-small text-muted mt-1" style="word-break: break-all;">
+                            {{ related.name }}
+                        </div>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Document Info -->
+        <div class="card">
+            <div class="card-header">
+                <h2 style="font-size: 1rem;">Document Info</h2>
+            </div>
+            <dl style="font-size: 0.875rem;">
+                <dt style="color: var(--gray-500); margin-bottom: 0.25rem;">Filename</dt>
+                <dd style="margin-bottom: 0.75rem; word-break: break-all;">{{ filename }}</dd>
+                <dt style="color: var(--gray-500); margin-bottom: 0.25rem;">Type</dt>
+                <dd style="margin-bottom: 0.75rem;">{{ doc_type | capitalize }}</dd>
+                <dt style="color: var(--gray-500); margin-bottom: 0.25rem;">Characters</dt>
+                <dd id="char-count">-</dd>
+            </dl>
+        </div>
     </div>
 </div>
 
-{% if doc_type == 'research' %}
-<div id="followup-result" style="display: none;" class="card">
-    <div class="card-header">
-        <h2>Follow-up Analysis</h2>
-        <a href="#" id="view-followup" class="btn btn-sm btn-primary">View Full Document</a>
-    </div>
-    <div id="followup-content" class="doc-content"></div>
-</div>
-{% endif %}
+<!-- Hidden raw content for copying/downloading -->
+<textarea id="raw-content" style="display: none;">{{ raw_content }}</textarea>
+
+<style>
+    .toc {
+        max-height: 300px;
+        overflow-y: auto;
+        font-size: 0.875rem;
+    }
+    
+    .toc ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .toc li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .toc a {
+        color: var(--gray-600);
+        text-decoration: none;
+        display: block;
+        padding: 0.25rem 0;
+        transition: color 0.2s;
+    }
+    
+    .toc a:hover {
+        color: var(--primary);
+    }
+    
+    .toc-h2 {
+        font-weight: 500;
+    }
+    
+    .toc-h3 {
+        padding-left: 1rem !important;
+        font-size: 0.8125rem;
+    }
+    
+    @media print {
+        nav, footer, .card:has(#followup-form), .card:has(#toc), .btn {
+            display: none !important;
+        }
+        
+        .grid {
+            display: block !important;
+        }
+        
+        .doc-content {
+            font-size: 11pt;
+            line-height: 1.5;
+        }
+        
+        .doc-content h1 {
+            font-size: 18pt;
+        }
+        
+        .doc-content h2 {
+            font-size: 14pt;
+        }
+        
+        .doc-content table {
+            font-size: 9pt;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
-{% if doc_type == 'research' %}
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-document.getElementById('followup-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+const rawContent = document.getElementById('raw-content').value;
+const filename = '{{ filename }}';
 
-    const question = document.getElementById('followup-question').value;
-    if (!question.trim()) {
-        alert('Please enter a follow-up question');
+// Generate Table of Contents
+function generateTOC() {
+    const content = document.getElementById('doc-content');
+    const toc = document.getElementById('toc');
+    const headings = content.querySelectorAll('h1, h2, h3');
+    
+    if (headings.length === 0) {
+        toc.innerHTML = '<p class="text-small text-muted">No headings found</p>';
         return;
     }
+    
+    const ul = document.createElement('ul');
+    let currentList = ul;
+    
+    headings.forEach((heading, index) => {
+        // Add ID for linking
+        const id = `heading-${index}`;
+        heading.id = id;
+        
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `#${id}`;
+        a.textContent = heading.textContent.slice(0, 50) + (heading.textContent.length > 50 ? '...' : '');
+        a.className = `toc-${heading.tagName.toLowerCase()}`;
+        li.appendChild(a);
+        ul.appendChild(li);
+    });
+    
+    toc.appendChild(ul);
+}
 
-    const submitBtn = document.getElementById('followup-btn');
-    const loading = document.getElementById('followup-loading');
+// Copy to clipboard
+function copyToClipboard() {
+    navigator.clipboard.writeText(rawContent).then(() => {
+        showToast('Copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
 
-    submitBtn.disabled = true;
-    loading.style.display = 'flex';
+// Download as markdown
+function downloadMarkdown() {
+    const blob = new Blob([rawContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
 
-    try {
-        const response = await fetch('/api/research/followup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                filename: '{{ filename }}',
-                question: question
-            })
-        });
+// Print document
+function printDocument() {
+    window.print();
+}
 
-        const data = await response.json();
+// Toast notification
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success fade-in';
+    toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; min-width: 200px;';
+    toast.innerHTML = `
+        <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 
-        if (data.success) {
-            document.getElementById('followup-result').style.display = 'block';
-            document.getElementById('followup-content').innerHTML = marked.parse(data.content);
-            document.getElementById('view-followup').href = '/research/' + data.filename;
-            document.getElementById('followup-question').value = '';
+// Character count
+document.getElementById('char-count').textContent = rawContent.length.toLocaleString();
 
-            // Scroll to result
-            document.getElementById('followup-result').scrollIntoView({ behavior: 'smooth' });
-        } else {
-            alert('Error: ' + data.error);
+// Follow-up form handler
+const followupForm = document.getElementById('followup-form');
+if (followupForm) {
+    followupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('followup-btn');
+        const status = document.getElementById('followup-status');
+        const question = document.getElementById('followup-question').value;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Analyzing...';
+        status.style.display = 'block';
+        status.innerHTML = '<div class="loading"><span class="spinner"></span> Running follow-up analysis...</div>';
+        
+        try {
+            const response = await fetch('/api/research/followup', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    filename: '{{ filename }}',
+                    question: question
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                status.innerHTML = `
+                    <div class="alert alert-success">
+                        <div>
+                            <strong>Analysis complete!</strong>
+                            <div class="mt-2">
+                                <a href="/research/${data.filename}" class="btn btn-primary btn-sm">View Follow-up →</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                status.innerHTML = `<div class="alert alert-error">${data.error}</div>`;
+            }
+        } catch (error) {
+            status.innerHTML = `<div class="alert alert-error">Error: ${error.message}</div>`;
         }
-    } catch (error) {
-        alert('Error: ' + error.message);
-    } finally {
-        submitBtn.disabled = false;
-        loading.style.display = 'none';
-    }
-});
+        
+        btn.disabled = false;
+        btn.innerHTML = `
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Analyze Follow-up
+        `;
+    });
+}
+
+// Initialize
+generateTOC();
 </script>
-{% endif %}
 {% endblock %}

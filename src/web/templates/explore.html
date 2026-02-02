@@ -3,117 +3,331 @@
 {% block title %}Explore - Supply Chain Intel{% endblock %}
 
 {% block content %}
-<h1>Explore Investment Themes</h1>
+<div class="flex justify-between items-center mb-4">
+    <h1>🔍 Explore Investment Themes</h1>
+</div>
 
 <div class="grid grid-2">
     <div class="card">
         <div class="card-header">
             <h2>New Exploration</h2>
+            <span class="badge badge-info">AI-Powered</span>
         </div>
         <form id="explore-form">
             <div class="form-group">
                 <label for="query">Theme, Company, or Market</label>
                 <input type="text" id="query" name="query"
-                       placeholder='e.g., "AI infrastructure", "ASML", "renewable energy"'
+                       placeholder='e.g., "AI data center buildout", "NVIDIA supply chain", "renewable energy storage"'
                        required>
+                <p class="text-small text-muted mt-2">Enter a theme, company name, ticker, or market trend to analyze</p>
             </div>
             <div class="form-group">
                 <label for="depth">Analysis Depth</label>
                 <select id="depth" name="depth">
-                    <option value="1">1 - Quick scan</option>
-                    <option value="2" selected>2 - Standard analysis</option>
-                    <option value="3">3 - Deep dive</option>
+                    <option value="1">Quick Scan — Primary players only (~30s)</option>
+                    <option value="2" selected>Standard — Include second-order plays (~60s)</option>
+                    <option value="3">Deep Dive — Third-order dependencies (~90s)</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary" id="explore-btn">
+            <button type="submit" class="btn btn-primary btn-lg" id="explore-btn" style="width: 100%;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
                 Run Exploration
             </button>
         </form>
-        <div id="explore-status" style="margin-top: 1rem; display: none;"></div>
+        
+        <div id="explore-status" class="mt-4" style="display: none;"></div>
     </div>
 
     <div class="card">
         <div class="card-header">
             <h2>Recent Research</h2>
+            <a href="/history" class="btn btn-ghost btn-sm">View All →</a>
         </div>
         {% if research_files %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Document</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for file in research_files[:10] %}
-                <tr>
-                    <td>{{ file.name }}</td>
-                    <td>
-                        <a href="/research/{{ file.name }}" class="btn btn-sm btn-secondary">View</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Type</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in research_files[:8] %}
+                    <tr>
+                        <td>
+                            <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                {{ file.name.replace('.md', '').replace('_', ' ').title()[:40] }}
+                            </div>
+                            <div class="text-small text-muted">{{ file.name }}</div>
+                        </td>
+                        <td>
+                            {% if '_followup_' in file.name %}
+                            <span class="badge badge-warning">Follow-up</span>
+                            {% else %}
+                            <span class="badge badge-success">Original</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="/research/{{ file.name }}" class="btn btn-secondary btn-sm">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
         <div class="empty-state">
             <div class="empty-state-icon">📊</div>
-            <p>No research documents yet. Run your first exploration!</p>
+            <h3>No Research Yet</h3>
+            <p>Run your first exploration to discover investment opportunities</p>
         </div>
         {% endif %}
     </div>
 </div>
 
-<div id="result-card" class="card" style="display: none;">
+<!-- Results Section -->
+<div id="result-card" class="card fade-in" style="display: none;">
     <div class="card-header">
-        <h2>Exploration Results</h2>
-        <a href="#" id="view-full-link" class="btn btn-sm btn-secondary">View Full Document</a>
+        <div>
+            <h2 id="result-title">Exploration Results</h2>
+            <p class="text-small text-muted" id="result-subtitle"></p>
+        </div>
+        <div class="flex gap-2">
+            <a href="#" id="view-full-link" class="btn btn-primary btn-sm">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+                View Full Report
+            </a>
+            <button class="btn btn-secondary btn-sm" onclick="downloadMarkdown()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download
+            </button>
+        </div>
     </div>
     <div id="result-content" class="doc-content"></div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="spinner spinner-lg"></div>
+    <div class="loading-text" id="loading-text">Analyzing investment theme...</div>
+    <div class="progress-bar">
+        <div class="progress-bar-fill"></div>
+    </div>
+    <div class="text-small text-muted mt-4" id="loading-stage">Initializing research agent</div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+let currentMarkdown = '';
+let currentFilename = '';
+
+const loadingStages = [
+    "Initializing research agent",
+    "Searching for market data",
+    "Analyzing supply chain relationships",
+    "Mapping upstream dependencies",
+    "Identifying downstream beneficiaries",
+    "Evaluating competitive dynamics",
+    "Assessing geographic risks",
+    "Building investment strategies",
+    "Generating scenario analysis",
+    "Compiling final report"
+];
+
+let stageIndex = 0;
+let stageInterval = null;
+
+function startLoadingAnimation() {
+    stageIndex = 0;
+    document.getElementById('loading-overlay').style.display = 'flex';
+    document.getElementById('loading-stage').textContent = loadingStages[0];
+    
+    stageInterval = setInterval(() => {
+        stageIndex = (stageIndex + 1) % loadingStages.length;
+        document.getElementById('loading-stage').textContent = loadingStages[stageIndex];
+    }, 6000);
+}
+
+function stopLoadingAnimation() {
+    document.getElementById('loading-overlay').style.display = 'none';
+    if (stageInterval) {
+        clearInterval(stageInterval);
+        stageInterval = null;
+    }
+}
+
+function downloadMarkdown() {
+    if (!currentMarkdown) return;
+    
+    const blob = new Blob([currentMarkdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = currentFilename || 'research.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 document.getElementById('explore-form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const btn = document.getElementById('explore-btn');
     const status = document.getElementById('explore-status');
     const resultCard = document.getElementById('result-card');
+    const query = document.getElementById('query').value;
+    const depth = document.getElementById('depth').value;
 
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Exploring...';
-    status.style.display = 'block';
-    status.innerHTML = '<div class="loading"><span class="spinner"></span> Running exploration (this may take up to 60 seconds)...</div>';
+    btn.innerHTML = '<span class="spinner"></span> Running...';
+    status.style.display = 'none';
     resultCard.style.display = 'none';
+    
+    startLoadingAnimation();
+    document.getElementById('loading-text').textContent = `Analyzing: ${query}`;
 
     try {
         const response = await fetch('/api/explore', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                query: document.getElementById('query').value,
-                depth: parseInt(document.getElementById('depth').value)
-            })
+            body: JSON.stringify({ query, depth: parseInt(depth) })
         });
 
         const data = await response.json();
+        stopLoadingAnimation();
 
         if (data.success) {
-            status.innerHTML = '<div class="alert alert-success">Exploration complete!</div>';
+            status.style.display = 'block';
+            status.innerHTML = `
+                <div class="alert alert-success">
+                    <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div>
+                        <strong>Exploration complete!</strong>
+                        <div class="text-small mt-1">Found investment opportunities across the supply chain</div>
+                    </div>
+                </div>
+            `;
+            
+            currentMarkdown = data.content;
+            currentFilename = data.filename;
+            
+            // Render markdown to HTML
             resultCard.style.display = 'block';
-            document.getElementById('result-content').innerHTML = data.content.replace(/\n/g, '<br>');
-            document.getElementById('view-full-link').href = '/research/' + data.path.split('/').pop();
+            document.getElementById('result-title').textContent = query;
+            document.getElementById('result-subtitle').textContent = `Depth ${depth} analysis • ${data.filename}`;
+            document.getElementById('result-content').innerHTML = renderMarkdown(data.content);
+            document.getElementById('view-full-link').href = '/research/' + data.filename;
+            
+            // Scroll to results
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
-            status.innerHTML = '<div class="alert alert-error">Error: ' + data.error + '</div>';
+            status.style.display = 'block';
+            status.innerHTML = `
+                <div class="alert alert-error">
+                    <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div>
+                        <strong>Error</strong>
+                        <div class="text-small mt-1">${data.error}</div>
+                    </div>
+                </div>
+            `;
         }
     } catch (error) {
-        status.innerHTML = '<div class="alert alert-error">Error: ' + error.message + '</div>';
+        stopLoadingAnimation();
+        status.style.display = 'block';
+        status.innerHTML = `
+            <div class="alert alert-error">
+                <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                    <strong>Connection Error</strong>
+                    <div class="text-small mt-1">${error.message}</div>
+                </div>
+            </div>
+        `;
     }
 
     btn.disabled = false;
-    btn.innerHTML = 'Run Exploration';
+    btn.innerHTML = `
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        Run Exploration
+    `;
 });
+
+// Simple markdown renderer
+function renderMarkdown(md) {
+    // Escape HTML
+    let html = md
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    
+    // Headers
+    html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+    
+    // Bold and italic
+    html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Code blocks
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    html = html.replace(/`(.*?)`/g, '<code>$1</code>');
+    
+    // Tables
+    html = html.replace(/^\|(.*)\|$/gm, function(match, content) {
+        const cells = content.split('|').map(c => c.trim());
+        // Check if it's a separator row
+        if (cells.every(c => /^[-:]+$/.test(c))) {
+            return ''; // Remove separator rows
+        }
+        const isHeader = content.includes('---');
+        const cellTag = isHeader ? 'th' : 'td';
+        const cellsHtml = cells.map(c => `<${cellTag}>${c}</${cellTag}>`).join('');
+        return `<tr>${cellsHtml}</tr>`;
+    });
+    
+    // Wrap consecutive table rows in table tags
+    html = html.replace(/(<tr>[\s\S]*?<\/tr>(\s*<tr>[\s\S]*?<\/tr>)*)/g, '<div class="table-wrapper"><table>$1</table></div>');
+    
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr>');
+    
+    // Line breaks
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    
+    // Wrap in paragraphs
+    html = '<p>' + html + '</p>';
+    
+    // Clean up empty paragraphs
+    html = html.replace(/<p><\/p>/g, '');
+    html = html.replace(/<p><h/g, '<h');
+    html = html.replace(/<\/h(\d)><\/p>/g, '</h$1>');
+    html = html.replace(/<p><hr><\/p>/g, '<hr>');
+    html = html.replace(/<p><div/g, '<div');
+    html = html.replace(/<\/div><\/p>/g, '</div>');
+    
+    return html;
+}
 </script>
 {% endblock %}
