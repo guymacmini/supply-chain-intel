@@ -3,7 +3,7 @@
 {% block title %}Dashboard - Supply Chain Intel{% endblock %}
 
 {% block content %}
-<h1>Dashboard</h1>
+<h1>📊 Investment Research Dashboard</h1>
 
 <div class="grid grid-4">
     <div class="card stat-card">
@@ -30,16 +30,28 @@
             <h2>Quick Actions</h2>
         </div>
         <div style="display: flex; flex-direction: column; gap: 1rem;">
-            <a href="/explore" class="btn btn-primary" style="justify-content: center;">
+            <a href="/explore" class="btn btn-primary btn-lg" style="justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
                 Explore New Theme
             </a>
-            <a href="/thesis" class="btn btn-primary" style="justify-content: center;">
+            <a href="/thesis" class="btn btn-secondary" style="justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
                 Create Investment Thesis
             </a>
             <a href="/monitor" class="btn btn-secondary" style="justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
                 Run Monitoring Scan
             </a>
             <a href="/watchlist" class="btn btn-secondary" style="justify-content: center;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                </svg>
                 Manage Watchlist
             </a>
         </div>
@@ -47,19 +59,56 @@
 
     <div class="card">
         <div class="card-header">
-            <h2>About</h2>
+            <h2>About Supply Chain Intel</h2>
         </div>
-        <p style="color: var(--gray-600); margin-bottom: 1rem;">
-            Supply Chain Intel helps fundamental investors identify non-obvious investment
-            opportunities by discovering second and third-order market dependencies.
+        <p style="color: var(--gray-600); margin-bottom: 1rem; line-height: 1.7;">
+            An AI-powered investment research platform that helps fundamental investors discover 
+            <strong>non-obvious opportunities</strong> by mapping supply chain dependencies and 
+            second/third-order market effects.
         </p>
-        <h3 style="font-size: 0.875rem; font-weight: 600; margin: 1rem 0 0.5rem;">Features:</h3>
-        <ul style="color: var(--gray-600); margin-left: 1.25rem;">
-            <li><strong>Explore</strong> - Discover hidden investment opportunities</li>
-            <li><strong>Thesis</strong> - Validate investment hypotheses</li>
-            <li><strong>Monitor</strong> - Track news for your watchlist</li>
-            <li><strong>Watchlist</strong> - Manage entities to monitor</li>
+        
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--gray-700);">
+            ✨ Key Features
+        </h3>
+        <ul style="color: var(--gray-600); margin-left: 1.25rem; line-height: 1.8;">
+            <li><strong>Explore</strong> — Discover hidden investment opportunities across supply chains</li>
+            <li><strong>Thesis</strong> — Validate and track investment hypotheses over time</li>
+            <li><strong>Monitor</strong> — Track news and developments for your watchlist</li>
+            <li><strong>Watchlist</strong> — Manage entities to monitor across themes</li>
         </ul>
+
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--gray-700);">
+            🎯 Research Framework
+        </h3>
+        <ul style="color: var(--gray-600); margin-left: 1.25rem; line-height: 1.8;">
+            <li><strong>Sector Analysis</strong> — Materials, Hardware, Software, Services, Infrastructure</li>
+            <li><strong>Supply Chain Tiers</strong> — Tier 1, Tier 2, Tier 3 dependencies</li>
+            <li><strong>Scenario Analysis</strong> — Bull, Base, Bear case investment strategies</li>
+            <li><strong>Picks & Shovels</strong> — Lower-risk enabling plays for each theme</li>
+        </ul>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>🚀 Getting Started</h2>
+    </div>
+    <div class="grid grid-3">
+        <div style="padding: 1rem; border: 1px solid var(--gray-200); border-radius: var(--radius); text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">1️⃣</div>
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Explore a Theme</h3>
+            <p class="text-small text-muted">Enter a company, sector, or trend to analyze its investment landscape</p>
+        </div>
+        <div style="padding: 1rem; border: 1px solid var(--gray-200); border-radius: var(--radius); text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">2️⃣</div>
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Review Research</h3>
+            <p class="text-small text-muted">Study the supply chain map and investment opportunities identified</p>
+        </div>
+        <div style="padding: 1rem; border: 1px solid var(--gray-200); border-radius: var(--radius); text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">3️⃣</div>
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Build Watchlist</h3>
+            <p class="text-small text-muted">Track the most interesting opportunities with ongoing monitoring</p>
+        </div>
     </div>
 </div>
 {% endblock %}
