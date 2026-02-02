@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
-from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter
+from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ResearchComparator
 from src.models import WatchlistEntity
 
 app = Flask(__name__,
@@ -23,6 +23,7 @@ DATA_DIR = Path(__file__).parent.parent.parent / 'data'
 watchlist_manager = WatchlistManager(data_dir=DATA_DIR)
 markdown_generator = MarkdownGenerator(output_dir=DATA_DIR)
 config_loader = ConfigLoader()
+research_comparator = ResearchComparator(data_dir=DATA_DIR)
 
 
 @app.route('/')
@@ -346,6 +347,52 @@ def view_digest(filename):
                          content=html_content,
                          raw_content=content,
                          doc_type='digest')
+
+
+# ============================================================================
+# COMPARISON ROUTES  
+# ============================================================================
+
+@app.route('/compare')
+def compare_page():
+    """Research comparison page."""
+    # Get list of available research reports
+    available_reports = research_comparator.list_available_research()
+    return render_template('compare.html', available_reports=available_reports)
+
+
+@app.route('/api/compare', methods=['POST'])
+def api_compare_research():
+    """API endpoint to compare research reports."""
+    data = request.get_json()
+    filenames = data.get('filenames', [])
+    
+    if len(filenames) < 2:
+        return jsonify({'error': 'Need at least 2 reports to compare'}), 400
+    if len(filenames) > 4:
+        return jsonify({'error': 'Maximum 4 reports can be compared'}), 400
+    
+    try:
+        comparison = research_comparator.compare_research_reports(filenames)
+        return jsonify({
+            'success': True,
+            'comparison': comparison
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/research/list', methods=['GET'])
+def api_list_research():
+    """API endpoint to get list of available research reports."""
+    try:
+        reports = research_comparator.list_available_research()
+        return jsonify({
+            'success': True,
+            'reports': reports
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # ============================================================================

@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Research - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">Research Comparison</h1>
+            <p class="text-gray-600 mt-2">Compare investment research reports side-by-side</p>
+        </div>
+    </div>
+
+    <!-- Selection Section -->
+    <div class="card mb-6">
+        <div class="card-header">
+            <h2>Select Reports to Compare</h2>
+            <p class="text-sm text-gray-600">Choose 2-4 research reports to compare</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium mb-2">Available Research Reports</label>
+                <div id="report-list" class="border rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto">
+                    {% if available_reports %}
+                        {% for report in available_reports %}
+                        <div class="report-item p-3 mb-2 bg-white rounded border cursor-pointer hover:bg-blue-50" 
+                             data-filename="{{ report.filename }}">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="font-medium text-sm">{{ report.theme }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ report.tickers_found }} tickers • {{ report.size_kb }}KB
+                                        {% if report.generated %}
+                                        • {{ report.generated[:10] }}
+                                        {% endif %}
+                                    </div>
+                                    {% if report.preview %}
+                                    <div class="text-xs text-gray-400 mt-1 truncate">
+                                        {{ report.preview[:100] }}...
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <input type="checkbox" class="report-checkbox ml-2" 
+                                       value="{{ report.filename }}" id="cb-{{ loop.index }}">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-gray-500 py-8">
+                            <p>No research reports available</p>
+                            <a href="/explore" class="btn btn-primary btn-sm mt-2">Create Research</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-2">Selected for Comparison (<span id="selected-count">0</span>/4)</label>
+                <div id="selected-reports" class="border rounded-lg p-4 bg-green-50 min-h-32">
+                    <div id="no-selection" class="text-center text-gray-500 py-8">
+                        Select reports from the left to compare
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button id="compare-btn" class="btn btn-primary" disabled>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mr-2">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2z"/>
+                        </svg>
+                        Compare Selected Reports
+                    </button>
+                    <button id="clear-btn" class="btn btn-ghost ml-2">Clear Selection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Results Section -->
+    <div id="comparison-results" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h2>Comparison Results</h2>
+                <div class="flex gap-2">
+                    <button id="export-comparison" class="btn btn-secondary btn-sm">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Export Comparison
+                    </button>
+                    <button id="close-comparison" class="btn btn-ghost btn-sm">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Close
+                    </button>
+                </div>
+            </div>
+            <div id="comparison-content">
+                <!-- Comparison content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-comparison" style="display: none;">
+        <div class="card">
+            <div class="card-body text-center py-12">
+                <div class="spinner mx-auto mb-4"></div>
+                <p>Analyzing and comparing research reports...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.report-item:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.report-item.selected {
+    background-color: #dbeafe !important;
+    border-color: #3b82f6;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+}
+
+.comparison-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+}
+
+.comparison-table .metric-label {
+    font-weight: 500;
+    background-color: #f3f4f6;
+    white-space: nowrap;
+}
+
+.tldr-box {
+    background-color: #fef3c7;
+    border: 2px solid #f59e0b;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.risk-item {
+    background-color: #fee2e2;
+    border-left: 4px solid #ef4444;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: 0 4px 4px 0;
+}
+
+.sector-tag {
+    display: inline-block;
+    background-color: #e0f2fe;
+    color: #0277bd;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin: 2px;
+}
+
+.ticker-tag {
+    display: inline-block;
+    background-color: #e8f5e8;
+    color: #2e7d32;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 2px;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedReports = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle report selection
+    document.querySelectorAll('.report-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (e.target.type === 'checkbox') return; // Let checkbox handle itself
+            
+            const checkbox = this.querySelector('.report-checkbox');
+            checkbox.checked = !checkbox.checked;
+            handleReportSelection(checkbox);
+        });
+    });
+    
+    document.querySelectorAll('.report-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function(e) {
+            e.stopPropagation();
+            handleReportSelection(this);
+        });
+    });
+    
+    // Compare button
+    document.getElementById('compare-btn').addEventListener('click', runComparison);
+    
+    // Clear button
+    document.getElementById('clear-btn').addEventListener('click', clearSelection);
+    
+    // Close comparison
+    document.getElementById('close-comparison').addEventListener('click', closeComparison);
+    
+    // Export comparison
+    document.getElementById('export-comparison').addEventListener('click', exportComparison);
+});
+
+function handleReportSelection(checkbox) {
+    const filename = checkbox.value;
+    const reportItem = checkbox.closest('.report-item');
+    
+    if (checkbox.checked) {
+        if (selectedReports.length >= 4) {
+            checkbox.checked = false;
+            showToast('Maximum 4 reports can be compared', 'warning');
+            return;
+        }
+        
+        selectedReports.push({
+            filename: filename,
+            theme: reportItem.querySelector('.font-medium').textContent
+        });
+        reportItem.classList.add('selected');
+    } else {
+        selectedReports = selectedReports.filter(r => r.filename !== filename);
+        reportItem.classList.remove('selected');
+    }
+    
+    updateSelectedReportsDisplay();
+}
+
+function updateSelectedReportsDisplay() {
+    const selectedDiv = document.getElementById('selected-reports');
+    const noSelection = document.getElementById('no-selection');
+    const countSpan = document.getElementById('selected-count');
+    const compareBtn = document.getElementById('compare-btn');
+    
+    countSpan.textContent = selectedReports.length;
+    
+    if (selectedReports.length === 0) {
+        noSelection.style.display = 'block';
+        selectedDiv.querySelectorAll('.selected-report').forEach(el => el.remove());
+        compareBtn.disabled = true;
+    } else {
+        noSelection.style.display = 'none';
+        
+        // Remove existing selected report divs
+        selectedDiv.querySelectorAll('.selected-report').forEach(el => el.remove());
+        
+        // Add new selected report divs
+        selectedReports.forEach((report, index) => {
+            const div = document.createElement('div');
+            div.className = 'selected-report p-2 bg-white border rounded mb-2 flex justify-between items-center';
+            div.innerHTML = `
+                <span class="text-sm">${index + 1}. ${report.theme}</span>
+                <button class="text-red-500 hover:text-red-700" onclick="removeSelection('${report.filename}')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+            selectedDiv.appendChild(div);
+        });
+        
+        compareBtn.disabled = selectedReports.length < 2;
+    }
+}
+
+function removeSelection(filename) {
+    // Uncheck the checkbox
+    const checkbox = document.querySelector(`input[value="${filename}"]`);
+    if (checkbox) {
+        checkbox.checked = false;
+        handleReportSelection(checkbox);
+    }
+}
+
+function clearSelection() {
+    document.querySelectorAll('.report-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll('.report-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    selectedReports = [];
+    updateSelectedReportsDisplay();
+}
+
+async function runComparison() {
+    if (selectedReports.length < 2) return;
+    
+    const loadingDiv = document.getElementById('loading-comparison');
+    const resultsDiv = document.getElementById('comparison-results');
+    
+    loadingDiv.style.display = 'block';
+    resultsDiv.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/compare', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                filenames: selectedReports.map(r => r.filename)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayComparison(data.comparison);
+        } else {
+            showToast('Error: ' + data.error, 'error');
+        }
+    } catch (error) {
+        showToast('Comparison failed: ' + error.message, 'error');
+    } finally {
+        loadingDiv.style.display = 'none';
+    }
+}
+
+function displayComparison(comparison) {
+    const contentDiv = document.getElementById('comparison-content');
+    const resultsDiv = document.getElementById('comparison-results');
+    
+    let html = generateComparisonHTML(comparison);
+    contentDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+    
+    // Scroll to results
+    resultsDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+function generateComparisonHTML(comparison) {
+    const reports = comparison.reports;
+    if (!reports || reports.length < 2) {
+        return '<div class="alert alert-error">Insufficient data for comparison</div>';
+    }
+    
+    let html = '<div class="comparison-container">';
+    
+    // Summary section
+    if (comparison.summary) {
+        html += `
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-3">Comparison Summary</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div class="stat-box">
+                        <div class="text-xs text-gray-500">Total Tickers</div>
+                        <div class="text-lg font-bold">${comparison.summary.total_tickers || 0}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-xs text-gray-500">Common Tickers</div>
+                        <div class="text-lg font-bold">${(comparison.summary.common_tickers || []).length}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-xs text-gray-500">Unique Sectors</div>
+                        <div class="text-lg font-bold">${(comparison.summary.unique_sectors || []).length}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="text-xs text-gray-500">Reports</div>
+                        <div class="text-lg font-bold">${reports.length}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // TLDR Comparison
+    html += '<div class="mb-6">';
+    html += '<h3 class="text-lg font-semibold mb-3">TLDR Comparison</h3>';
+    html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+    
+    reports.forEach((report, index) => {
+        if (!report.error) {
+            html += `
+                <div class="tldr-box">
+                    <div class="font-medium text-sm mb-2">${index + 1}. ${report.theme}</div>
+                    <div class="text-sm">${report.tldr || 'No TLDR available'}</div>
+                </div>
+            `;
+        }
+    });
+    
+    html += '</div></div>';
+    
+    // Side-by-side table
+    html += '<div class="mb-6">';
+    html += '<h3 class="text-lg font-semibold mb-3">Side-by-Side Comparison</h3>';
+    html += '<div class="overflow-x-auto">';
+    html += '<table class="comparison-table">';
+    
+    // Header row
+    html += '<thead><tr><th class="metric-label">Metric</th>';
+    reports.forEach((report, index) => {
+        const theme = report.theme || `Report ${index + 1}`;
+        html += `<th>${theme}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+    
+    // Basic info rows
+    const basicMetrics = [
+        { key: 'generated', label: 'Generated', format: (v) => v ? v.split('T')[0] : 'Unknown' },
+        { key: 'tickers_found', label: 'Tickers Found', format: (v) => v || 0 }
+    ];
+    
+    basicMetrics.forEach(metric => {
+        html += `<tr><td class="metric-label">${metric.label}</td>`;
+        reports.forEach(report => {
+            const value = report[metric.key];
+            html += `<td>${metric.format(value)}</td>`;
+        });
+        html += '</tr>';
+    });
+    
+    // Top companies row
+    html += '<tr><td class="metric-label">Top Companies</td>';
+    reports.forEach(report => {
+        if (report.key_companies && report.key_companies.length > 0) {
+            const tickers = report.key_companies.slice(0, 5).map(c => 
+                `<span class="ticker-tag">${c.ticker}</span>`
+            ).join(' ');
+            html += `<td>${tickers}</td>`;
+        } else {
+            html += '<td>No companies found</td>';
+        }
+    });
+    html += '</tr>';
+    
+    // Sectors row
+    html += '<tr><td class="metric-label">Sectors</td>';
+    reports.forEach(report => {
+        if (report.sectors && report.sectors.length > 0) {
+            const sectors = report.sectors.slice(0, 3).map(s => 
+                `<span class="sector-tag">${s}</span>`
+            ).join(' ');
+            html += `<td>${sectors}</td>`;
+        } else {
+            html += '<td>No sectors identified</td>';
+        }
+    });
+    html += '</tr>';
+    
+    html += '</tbody></table></div></div>';
+    
+    // Risk Comparison
+    html += '<div class="mb-6">';
+    html += '<h3 class="text-lg font-semibold mb-3">Risk Factors Comparison</h3>';
+    html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+    
+    reports.forEach((report, index) => {
+        html += `<div>`;
+        html += `<h4 class="font-medium mb-2">${index + 1}. ${report.theme}</h4>`;
+        if (report.risk_factors && report.risk_factors.length > 0) {
+            report.risk_factors.forEach(risk => {
+                html += `<div class="risk-item text-sm">${risk}</div>`;
+            });
+        } else {
+            html += '<div class="text-sm text-gray-500">No specific risks identified</div>';
+        }
+        html += '</div>';
+    });
+    
+    html += '</div></div>';
+    
+    html += '</div>'; // Close comparison-container
+    
+    return html;
+}
+
+function closeComparison() {
+    document.getElementById('comparison-results').style.display = 'none';
+}
+
+function exportComparison() {
+    // TODO: Implement export functionality
+    showToast('Export functionality coming soon!', 'info');
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    const bgColor = {
+        'info': 'bg-blue-100 text-blue-800 border-blue-300',
+        'success': 'bg-green-100 text-green-800 border-green-300',
+        'warning': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        'error': 'bg-red-100 text-red-800 border-red-300'
+    }[type] || 'bg-gray-100 text-gray-800 border-gray-300';
+    
+    toast.className = `fixed top-4 right-4 z-50 p-4 border rounded-lg shadow-lg ${bgColor}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 4000);
+}
+</script>
+
+<style>
+.stat-box {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+}
+</style>
+{% endblock %}

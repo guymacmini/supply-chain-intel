@@ -66,16 +66,27 @@ Create automated tests that actually run the app:
 
 ## 🟡 Medium Priority (Next)
 
-### 4. [ui] Research Comparison View
+### 4. [ui] Research Comparison View ✅
 **Impact**: High - compare opportunities side-by-side  
 **Effort**: Medium  
-**Status**: TODO
+**Status**: DONE (2026-02-02)
 
 Add ability to compare 2-3 research reports:
-- Side-by-side TLDR comparison
-- Valuation metrics comparison table
-- Risk factors comparison
-- "Which is better?" summary
+- Side-by-side TLDR comparison ✅
+- Valuation metrics comparison table ✅
+- Risk factors comparison ✅  
+- "Which is better?" summary ✅
+
+**IMPLEMENTATION DETAILS**: Complete research comparison system with web interface:
+- Created `ResearchComparator` utility for parsing and comparing research reports
+- Added `/compare` page with interactive research selection interface
+- Comprehensive data extraction: TLDR, executive summary, companies, sectors, risks, valuations
+- Side-by-side comparison tables with multiple analysis dimensions
+- API endpoints: `/api/research/list` and `/api/compare` 
+- Advanced parsing with regex patterns for tickers, market data, risk factors
+- Responsive web interface with drag-and-drop style selection
+- Export functionality placeholder for future enhancement
+- All functionality tested and working with real research data
 
 ### 5. [feature] Watchlist & Saved Research
 **Impact**: Medium - track interesting opportunities  
@@ -159,6 +170,7 @@ Add dark mode toggle for late-night research sessions.
 - [bugfix] PDF Export Not Working ✅
 - [test] End-to-End Test Suite ✅
 - [research] Enhanced Ticker Enrichment ✅
+- [ui] Research Comparison View ✅
 - [analysis] Shortage/Bottleneck Severity Analyzer ✅
 - [analysis] Valuation Reality Check ✅  
 - [analysis] Demand Acceleration Scorer ✅
