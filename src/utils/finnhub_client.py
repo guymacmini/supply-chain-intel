@@ -129,7 +129,14 @@ class FinnhubClient:
                 '52_week_low': float,
                 'pe_ratio': float,
                 'market_cap': float (in millions),
-                'exchange': str
+                'market_cap_tier': str (mega/large/mid/small/micro),
+                'exchange': str,
+                'sector': str (GICS sector),
+                'industry': str (GICS industry),
+                'country': str (HQ country),
+                'revenue_ttm': float (millions),
+                'revenue_growth': float (YoY %),
+                'eps_ttm': float
             }
         """
         if not self.is_available():
@@ -152,13 +159,28 @@ class FinnhubClient:
                 '52_week_low': None,
                 'pe_ratio': None,
                 'market_cap': None,
-                'exchange': None
+                'market_cap_tier': None,
+                'exchange': None,
+                'sector': None,
+                'industry': None,
+                'country': None,
+                'revenue_ttm': None,
+                'revenue_growth': None,
+                'eps_ttm': None
             }
 
             # Add profile data
             if profile:
-                result['market_cap'] = profile.get('marketCapitalization')
+                market_cap = profile.get('marketCapitalization')
+                result['market_cap'] = market_cap
                 result['exchange'] = profile.get('exchange')
+                result['sector'] = profile.get('finnhubIndustry')  # GICS sector
+                result['industry'] = profile.get('gind')  # GICS industry
+                result['country'] = profile.get('country')
+                
+                # Calculate market cap tier
+                if market_cap:
+                    result['market_cap_tier'] = self._classify_market_cap_tier(market_cap)
 
             # Add financial metrics
             if financials and 'metric' in financials:
@@ -166,12 +188,36 @@ class FinnhubClient:
                 result['52_week_high'] = metrics.get('52WeekHigh')
                 result['52_week_low'] = metrics.get('52WeekLow')
                 result['pe_ratio'] = metrics.get('peBasicExclExtraTTM')
+                result['revenue_ttm'] = metrics.get('revenueTTM')
+                result['revenue_growth'] = metrics.get('revenueGrowthTTMYoy')
+                result['eps_ttm'] = metrics.get('epsBasicExclExtraTTM')
 
             return result
 
         except Exception as e:
             logger.warning(f"Failed to fetch market data for {ticker}: {e}")
             return None
+
+    def _classify_market_cap_tier(self, market_cap_millions: float) -> str:
+        """
+        Classify market cap into tiers.
+        
+        Args:
+            market_cap_millions: Market cap in millions USD
+            
+        Returns:
+            Market cap tier classification
+        """
+        if market_cap_millions >= 200000:  # $200B+
+            return "mega"
+        elif market_cap_millions >= 10000:  # $10B-$200B
+            return "large"
+        elif market_cap_millions >= 2000:   # $2B-$10B
+            return "mid"
+        elif market_cap_millions >= 300:    # $300M-$2B
+            return "small"
+        else:                              # <$300M
+            return "micro"
 
     def get_market_data_for_tickers(self, tickers: list[str]) -> dict[str, dict]:
         """

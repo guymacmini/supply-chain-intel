@@ -1016,13 +1016,13 @@ Use web search to gather current information relevant to the follow-up question.
 
     def _generate_market_valuation_section(self, tickers: list[str]) -> str:
         """
-        Generate market valuation section using Finnhub data.
+        Generate enhanced market valuation section using Finnhub data.
 
         Args:
             tickers: List of ticker symbols
 
         Returns:
-            Markdown formatted market valuation section
+            Markdown formatted market valuation section with enriched company data
         """
         if not self.finnhub_client.is_available() or not tickers:
             return ""
@@ -1036,16 +1036,23 @@ Use web search to gather current information relevant to the follow-up question.
         if not market_data:
             return ""
 
-        # Build markdown table
+        # Build enhanced market data tables
         lines = [
             "\n---",
-            "\n## Live Market Data",
-            "*Data from Finnhub. Prices may be delayed.*\n",
-            "| Ticker | Price | 52W Range | P/E | Market Cap | Position in Range |",
-            "|--------|-------|-----------|-----|------------|-------------------|"
+            "\n## Enhanced Market Data & Company Profiles",
+            "*Data from Finnhub. Prices may be delayed.*\n"
         ]
 
+        # Primary market data table
+        lines.extend([
+            "### Trading & Valuation Metrics",
+            "| Ticker | Price | 52W Range | P/E | Market Cap | Tier | Position |",
+            "|--------|-------|-----------|-----|------------|------|----------|"
+        ])
+
         valuation_notes = []
+        company_profiles = []
+        
         for ticker, data in market_data.items():
             price = f"${data['current_price']:.2f}" if data.get('current_price') else "N/A"
 
@@ -1060,16 +1067,19 @@ Use web search to gather current information relevant to the follow-up question.
 
             mcap = data.get('market_cap')
             if mcap:
-                if mcap >= 1000:
-                    mcap_str = f"${mcap/1000:.1f}T"
-                elif mcap >= 1:
-                    mcap_str = f"${mcap:.0f}B"
-                else:
-                    mcap_str = f"${mcap*1000:.0f}M"
+                if mcap >= 1000000:  # $1T+
+                    mcap_str = f"${mcap/1000000:.2f}T"
+                elif mcap >= 1000:  # $1B+
+                    mcap_str = f"${mcap/1000:.1f}B"
+                else:  # <$1B
+                    mcap_str = f"${mcap:.0f}M"
             else:
                 mcap_str = "-"
 
-            # Calculate position in 52-week range
+            # Market cap tier
+            tier = data.get('market_cap_tier', '-').title()
+
+            # Position in 52-week range
             current = data.get('current_price')
             if current and high and low and (high - low) > 0:
                 range_pct = ((current - low) / (high - low)) * 100
@@ -1083,7 +1093,71 @@ Use web search to gather current information relevant to the follow-up question.
             else:
                 range_str = "-"
 
-            lines.append(f"| {ticker} | {price} | {week_52} | {pe} | {mcap_str} | {range_str} |")
+            lines.append(f"| {ticker} | {price} | {week_52} | {pe} | {mcap_str} | {tier} | {range_str} |")
+
+            # Collect company profile data
+            if any(data.get(field) for field in ['sector', 'industry', 'country']):
+                company_profiles.append({
+                    'ticker': ticker,
+                    'sector': data.get('sector', 'N/A'),
+                    'industry': data.get('industry', 'N/A'), 
+                    'country': data.get('country', 'N/A'),
+                    'revenue_ttm': data.get('revenue_ttm'),
+                    'revenue_growth': data.get('revenue_growth'),
+                    'eps_ttm': data.get('eps_ttm')
+                })
+
+        # Add company profiles table
+        if company_profiles:
+            lines.extend([
+                "\n### Company Profiles & Fundamentals",
+                "| Ticker | Sector | Industry | HQ Country | Revenue (TTM) | Growth | EPS |",
+                "|--------|--------|----------|------------|---------------|--------|-----|"
+            ])
+
+            for profile in company_profiles:
+                sector = profile['sector'][:20] if profile['sector'] != 'N/A' else 'N/A'
+                industry = profile['industry'][:20] if profile['industry'] != 'N/A' else 'N/A'
+                country = profile['country'] if profile['country'] != 'N/A' else 'N/A'
+                
+                revenue = f"${profile['revenue_ttm']/1000:.1f}B" if profile['revenue_ttm'] and profile['revenue_ttm'] >= 1000 else f"${profile['revenue_ttm']:.0f}M" if profile['revenue_ttm'] else '-'
+                growth = f"{profile['revenue_growth']:.1f}%" if profile['revenue_growth'] is not None else '-'
+                eps = f"${profile['eps_ttm']:.2f}" if profile['eps_ttm'] is not None else '-'
+
+                lines.append(f"| {profile['ticker']} | {sector} | {industry} | {country} | {revenue} | {growth} | {eps} |")
+
+        # Add sector and geographic analysis
+        if company_profiles:
+            sectors = {}
+            countries = {}
+            tiers = {}
+            
+            for ticker, data in market_data.items():
+                # Collect sector data
+                if data.get('sector') and data['sector'] != 'N/A':
+                    sectors[data['sector']] = sectors.get(data['sector'], 0) + 1
+                # Collect country data  
+                if data.get('country') and data['country'] != 'N/A':
+                    countries[data['country']] = countries.get(data['country'], 0) + 1
+                # Collect tier data
+                if data.get('market_cap_tier'):
+                    tier = data['market_cap_tier'].title()
+                    tiers[tier] = tiers.get(tier, 0) + 1
+
+            if sectors:
+                lines.append("\n### Sector Exposure")
+                for sector, count in sorted(sectors.items(), key=lambda x: x[1], reverse=True):
+                    lines.append(f"- **{sector}**: {count} companies")
+
+            if countries:
+                lines.append("\n### Geographic Exposure")
+                for country, count in sorted(countries.items(), key=lambda x: x[1], reverse=True):
+                    lines.append(f"- **{country}**: {count} companies")
+
+            if tiers:
+                lines.append("\n### Market Cap Distribution")
+                for tier, count in sorted(tiers.items(), key=lambda x: ['Mega', 'Large', 'Mid', 'Small', 'Micro'].index(x[0])):
+                    lines.append(f"- **{tier}-cap**: {count} companies")
 
         # Add valuation commentary
         if valuation_notes:
