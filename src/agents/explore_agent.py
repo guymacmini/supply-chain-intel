@@ -14,6 +14,9 @@ from ..utils.markdown_generator import MarkdownGenerator
 from ..utils.watchlist_manager import WatchlistManager
 from ..utils.finnhub_client import FinnhubClient
 from ..utils.tavily_client import TavilyClient
+from ..analysis.shortage_analyzer import ShortageAnalyzer, analyze_bottlenecks
+from ..analysis.valuation_checker import ValuationChecker, check_valuations
+from ..analysis.demand_analyzer import DemandAnalyzer, analyze_demand
 from .base_agent import BaseAgent
 
 logger = logging.getLogger(__name__)
@@ -286,6 +289,131 @@ Use web search extensively to gather current, accurate information. Search for:
 - Trade publications and expert opinions"""
 
 
+BOTTLENECK_EXTRACTION_PROMPT = """Based on the research content below, identify the key supply chain bottlenecks and constraints.
+
+For each bottleneck, provide:
+1. component: Name of the constrained component/resource
+2. lead_time_months: Estimated lead time (null if unknown)
+3. source_concentration: "single-source", "dual-source", "concentrated", or "diversified"
+4. geographic_risk: Primary geography (e.g., "Taiwan", "China", or null)
+5. capacity_utilization: Estimated utilization % (null if unknown)
+6. affected_companies: List of ticker symbols most affected
+
+Return as JSON array. Example:
+```json
+[
+  {
+    "component": "CoWoS Advanced Packaging",
+    "lead_time_months": 9,
+    "source_concentration": "single-source",
+    "geographic_risk": "Taiwan",
+    "capacity_utilization": 95,
+    "affected_companies": ["NVDA", "AMD", "TSM"]
+  }
+]
+```
+
+Research content:
+{content}
+
+Return ONLY the JSON array, no other text."""
+
+
+DEMAND_EXTRACTION_PROMPT = """Based on the research content below, identify supply chain tiers and their demand characteristics.
+
+For each tier, provide:
+1. tier_name: Descriptive name
+2. tier_level: 0=raw materials, 1=components, 2=subsystems, 3=integration
+3. demand_multiplier: How much this tier grows vs end market (e.g., 2.0 = grows 20% when end market grows 10%)
+4. scale_lead_time_months: Months to add meaningful capacity
+5. current_utilization: Estimated utilization % (null if unknown)
+6. pricing_power: "high", "medium", or "low"
+7. key_players: List of {{"company": "name", "ticker": "SYM"}}
+
+Return as JSON array. Example:
+```json
+[
+  {
+    "tier_name": "Advanced GPU Memory (HBM)",
+    "tier_level": 1,
+    "demand_multiplier": 1.8,
+    "scale_lead_time_months": 18,
+    "current_utilization": 85,
+    "pricing_power": "medium",
+    "key_players": [{{"company": "SK Hynix", "ticker": "HXSCF"}}, {{"company": "Samsung", "ticker": "SSNLF"}}]
+  }
+]
+```
+
+Research content:
+{content}
+
+Return ONLY the JSON array, no other text."""
+
+
+VALUATION_EXTRACTION_PROMPT = """Based on the research content and tickers below, provide valuation context for each ticker.
+
+For each ticker, estimate (or mark null if unknown):
+1. ticker: The symbol
+2. company: Company name
+3. current_pe: Approximate current P/E ratio
+4. pe_5y_avg: Historical average P/E (estimate)
+5. pe_sector_avg: Sector average P/E
+6. revenue_growth: Recent YoY revenue growth %
+7. earnings_growth: Recent YoY earnings growth %
+
+Return as JSON array. Example:
+```json
+[
+  {{"ticker": "NVDA", "company": "NVIDIA", "current_pe": 55, "pe_5y_avg": 40, "pe_sector_avg": 25, "revenue_growth": 122, "earnings_growth": 150}}
+]
+```
+
+Tickers to analyze: {tickers}
+
+Research content:
+{content}
+
+Return ONLY the JSON array, no other text."""
+
+
+TLDR_GENERATION_PROMPT = """Based on the research below, generate a 2-3 sentence TLDR that captures:
+1. The single most important insight
+2. The best actionable opportunity (specific ticker if possible)
+3. The biggest risk to watch
+
+Be specific and actionable. No fluff.
+
+Research content:
+{content}
+
+TLDR:"""
+
+
+CONTRARIAN_ANALYSIS_PROMPT = """You are a skeptical, contrarian analyst. Challenge the bull case in this research.
+
+Generate a "Devil's Advocate" section that includes:
+
+## What Could Go Wrong?
+[3-5 specific risks that aren't just generic market risk]
+
+## Who Wins If This Thesis Fails?
+[Companies/sectors that benefit if the bull case doesn't play out - be specific with tickers]
+
+## What Are Investors Missing?
+[2-3 blind spots in the consensus view]
+
+## Counter-Thesis Trades
+| If Bull Case Fails | Consider | Ticker | Rationale |
+|-------------------|----------|--------|-----------|
+[2-3 alternative trades]
+
+Research content:
+{content}
+
+Generate the contrarian analysis:"""
+
+
 class ExploreAgent(BaseAgent):
     """Agent for exploring themes and discovering investment opportunities."""
 
@@ -467,15 +595,56 @@ Craft specific, targeted queries for best results.""",
         else:
             raise RuntimeError(f"Failed after {max_retries} attempts. Last error: {last_error}")
 
-        # Extract tickers and add market valuation section if Finnhub is available
+        # Extract tickers for analysis
         tickers = self._extract_tickers(content)
+        
+        # Generate TLDR (added at the top of the document)
+        logger.info("Generating TLDR...")
+        tldr_section = self._generate_tldr(content)
+        
+        # Generate analysis sections
+        logger.info("Running bottleneck analysis...")
+        bottleneck_section = self._extract_and_analyze_bottlenecks(content)
+        
+        logger.info("Running demand acceleration analysis...")
+        demand_section = self._extract_and_analyze_demand(content)
+        
+        # Valuation check using extracted tickers
+        logger.info(f"Checking valuations for {len(tickers)} tickers...")
+        valuation_section = self._extract_and_check_valuations(content, tickers)
+        
+        # Live market data if Finnhub is available
         if tickers:
             market_section = self._generate_market_valuation_section(tickers)
             if market_section:
                 content += "\n" + market_section
+        
+        # Add analysis sections
+        if bottleneck_section:
+            content += bottleneck_section
+        if demand_section:
+            content += demand_section
+        if valuation_section:
+            content += valuation_section
+        
+        # Contrarian analysis (devil's advocate)
+        logger.info("Generating contrarian analysis...")
+        contrarian_section = self._generate_contrarian_analysis(content)
+        if contrarian_section:
+            content += contrarian_section
 
         # Add research metadata section
         content += self._generate_research_metadata(query, depth, tool_results)
+        
+        # Prepend TLDR at the top (after the title)
+        if tldr_section:
+            # Find the first --- after the header and insert TLDR after it
+            if "---" in content:
+                parts = content.split("---", 2)
+                if len(parts) >= 2:
+                    content = parts[0] + "---\n\n" + tldr_section + "\n" + "---".join(parts[1:])
+            else:
+                content = tldr_section + "\n" + content
 
         # Generate the research document
         metadata = {
@@ -690,6 +859,160 @@ Use web search to gather current information relevant to the follow-up question.
                    'N', 'A', 'NA', 'TBD', 'YES', 'NO', 'ALL', 'NEW', 'TOP',
                    'BUY', 'SELL', 'HOLD', 'LONG', 'AVG', 'MAX', 'MIN'}
         return [t for t in tickers_found if t not in exclude and len(t) >= 2]
+
+    def _generate_tldr(self, content: str) -> str:
+        """Generate a concise TLDR for the research."""
+        try:
+            prompt = TLDR_GENERATION_PROMPT.format(content=content[:15000])
+            
+            response = self.client.messages.create(
+                model=self.api_config["model"],
+                max_tokens=500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            tldr = response.content[0].text.strip()
+            
+            return f"""## 📌 TLDR
+
+{tldr}
+
+---
+"""
+        except Exception as e:
+            logger.warning(f"Failed to generate TLDR: {e}")
+            return ""
+
+    def _generate_contrarian_analysis(self, content: str) -> str:
+        """Generate contrarian/devil's advocate analysis."""
+        try:
+            prompt = CONTRARIAN_ANALYSIS_PROMPT.format(content=content[:15000])
+            
+            response = self.client.messages.create(
+                model=self.api_config["model"],
+                max_tokens=1500,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            analysis = response.content[0].text.strip()
+            
+            return f"""
+---
+
+## 😈 Devil's Advocate
+
+{analysis}
+"""
+        except Exception as e:
+            logger.warning(f"Failed to generate contrarian analysis: {e}")
+            return ""
+
+    def _extract_and_analyze_bottlenecks(self, content: str) -> str:
+        """Extract bottleneck data from research and run analysis."""
+        try:
+            prompt = BOTTLENECK_EXTRACTION_PROMPT.format(content=content[:15000])
+            
+            response = self.client.messages.create(
+                model=self.api_config["model"],
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            json_str = response.content[0].text.strip()
+            # Extract JSON from response (handle markdown code blocks)
+            if "```json" in json_str:
+                json_str = json_str.split("```json")[1].split("```")[0]
+            elif "```" in json_str:
+                json_str = json_str.split("```")[1].split("```")[0]
+            
+            components = json.loads(json_str)
+            
+            if not components:
+                return ""
+            
+            # Use the analyzer
+            analyzer = ShortageAnalyzer()
+            _, markdown = analyzer.analyze_supply_chain(components)
+            
+            return f"\n---\n\n{markdown}"
+            
+        except Exception as e:
+            logger.warning(f"Failed to analyze bottlenecks: {e}")
+            return ""
+
+    def _extract_and_analyze_demand(self, content: str) -> str:
+        """Extract demand tier data from research and run analysis."""
+        try:
+            prompt = DEMAND_EXTRACTION_PROMPT.format(content=content[:15000])
+            
+            response = self.client.messages.create(
+                model=self.api_config["model"],
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            json_str = response.content[0].text.strip()
+            # Extract JSON from response
+            if "```json" in json_str:
+                json_str = json_str.split("```json")[1].split("```")[0]
+            elif "```" in json_str:
+                json_str = json_str.split("```")[1].split("```")[0]
+            
+            tiers = json.loads(json_str)
+            
+            if not tiers:
+                return ""
+            
+            # Use the analyzer
+            analyzer = DemandAnalyzer()
+            _, markdown = analyzer.analyze_supply_chain(tiers)
+            
+            return f"\n---\n\n{markdown}"
+            
+        except Exception as e:
+            logger.warning(f"Failed to analyze demand: {e}")
+            return ""
+
+    def _extract_and_check_valuations(self, content: str, tickers: list[str]) -> str:
+        """Extract valuation data and run analysis for given tickers."""
+        if not tickers:
+            return ""
+            
+        try:
+            # Limit to top 15 tickers
+            tickers_str = ", ".join(tickers[:15])
+            prompt = VALUATION_EXTRACTION_PROMPT.format(
+                content=content[:12000],
+                tickers=tickers_str
+            )
+            
+            response = self.client.messages.create(
+                model=self.api_config["model"],
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            json_str = response.content[0].text.strip()
+            # Extract JSON from response
+            if "```json" in json_str:
+                json_str = json_str.split("```json")[1].split("```")[0]
+            elif "```" in json_str:
+                json_str = json_str.split("```")[1].split("```")[0]
+            
+            stocks = json.loads(json_str)
+            
+            if not stocks:
+                return ""
+            
+            # Use the checker
+            checker = ValuationChecker()
+            _, markdown = checker.analyze_portfolio(stocks)
+            
+            return f"\n---\n\n{markdown}"
+            
+        except Exception as e:
+            logger.warning(f"Failed to check valuations: {e}")
+            return ""
 
     def _generate_market_valuation_section(self, tickers: list[str]) -> str:
         """
