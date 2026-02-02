@@ -244,15 +244,6 @@
       "source_research": "quantum_computing_20260202.md"
     },
     {
-      "ticker": "MSFT",
-      "name": "MSFT",
-      "themes": [
-        "quantum_computing"
-      ],
-      "added_date": "2026-02-02",
-      "source_research": "quantum_computing_20260202.md"
-    },
-    {
       "ticker": "CRWD",
       "name": "CRWD",
       "themes": [
@@ -485,7 +476,17 @@
       ],
       "added_date": "2026-02-02",
       "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "AAPL",
+      "name": "Apple Inc.",
+      "themes": [
+        "Consumer Electronics",
+        "Tech"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": null
     }
   ],
-  "last_updated": "2026-02-02T13:39:22.137347"
+  "last_updated": "2026-02-02T14:15:22.674438"
 }
