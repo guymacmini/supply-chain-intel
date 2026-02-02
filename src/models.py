@@ -52,6 +52,60 @@ class WatchlistEntity:
         )
 
 
+class SavedResearchStatus(Enum):
+    """Status of saved research."""
+    INTERESTED = "interested"
+    TRACKING = "tracking"
+    PASSED = "passed"
+
+
+@dataclass
+class SavedResearch:
+    """A saved research report with user annotations."""
+    filename: str
+    title: str
+    status: SavedResearchStatus
+    saved_date: str
+    notes: str = ""
+    tags: list[str] = field(default_factory=list)
+    rating: Optional[int] = None  # 1-5 rating
+    sector: Optional[str] = None
+    tickers: list[str] = field(default_factory=list)
+    tldr: Optional[str] = None
+    last_updated: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "filename": self.filename,
+            "title": self.title,
+            "status": self.status.value,
+            "saved_date": self.saved_date,
+            "notes": self.notes,
+            "tags": self.tags,
+            "rating": self.rating,
+            "sector": self.sector,
+            "tickers": self.tickers,
+            "tldr": self.tldr,
+            "last_updated": self.last_updated
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "SavedResearch":
+        return cls(
+            filename=data["filename"],
+            title=data["title"],
+            status=SavedResearchStatus(data["status"]),
+            saved_date=data["saved_date"],
+            notes=data.get("notes", ""),
+            tags=data.get("tags", []),
+            rating=data.get("rating"),
+            sector=data.get("sector"),
+            tickers=data.get("tickers", []),
+            tldr=data.get("tldr"),
+            last_updated=data.get("last_updated")
+        )
+
+
 @dataclass
 class Claim:
     """A testable claim extracted from a thesis."""
