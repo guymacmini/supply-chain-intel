@@ -45,6 +45,12 @@
             Print
         </button>
         {% if doc_type == 'research' %}
+        <button class="btn btn-success btn-sm" onclick="saveToWatchlist()" id="save-to-watchlist-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+            </svg>
+            Save to Watchlist
+        </button>
         <button class="btn btn-primary btn-sm" onclick="exportToPDF()" id="pdf-export-btn">
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -274,6 +280,63 @@ function printDocument() {
     window.print();
 }
 
+// Save to watchlist
+function saveToWatchlist() {
+    const btn = document.getElementById('save-to-watchlist-btn');
+    const originalText = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Saving...';
+    
+    const title = '{{ title }}'.replace('.md', '').replace(/_/g, ' ');
+    
+    // Save the research
+    fetch('/api/saved-research', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            filename: filename,
+            title: title,
+            status: 'interested', // Default status
+            notes: '',
+            tags: []
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        if (data.success) {
+            btn.innerHTML = `
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Saved!
+            `;
+            btn.style.background = '#10b981'; // Green color
+            showToast('Research saved to watchlist!');
+            
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+            }, 3000);
+        } else {
+            btn.innerHTML = originalText;
+            if (data.message && data.message.includes('already saved')) {
+                showToast('Research is already in your watchlist', 'warning');
+            } else {
+                showToast('Failed to save research: ' + (data.message || data.error), 'error');
+            }
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showToast('Error saving research: ' + error.message, 'error');
+    });
+}
+
 // Export to PDF
 function exportToPDF() {
     const btn = document.getElementById('pdf-export-btn');
@@ -305,13 +368,26 @@ function exportToPDF() {
 }
 
 // Toast notification
-function showToast(message) {
+function showToast(message, type = 'success') {
     const toast = document.createElement('div');
-    toast.className = 'alert alert-success fade-in';
+    toast.className = `alert alert-${type} fade-in`;
     toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; min-width: 200px;';
+    
+    let icon;
+    switch(type) {
+        case 'error':
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+            break;
+        case 'warning':
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>';
+            break;
+        default:
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+    }
+    
     toast.innerHTML = `
         <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            ${icon}
         </svg>
         ${message}
     `;

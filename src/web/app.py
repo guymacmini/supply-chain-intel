@@ -12,7 +12,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
 from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ResearchComparator
-from src.models import WatchlistEntity
+from src.utils.saved_research_store import SavedResearchStore
+from src.models import WatchlistEntity, SavedResearch, SavedResearchStatus
 
 app = Flask(__name__,
             template_folder=str(Path(__file__).parent / 'templates'),
@@ -24,6 +25,7 @@ watchlist_manager = WatchlistManager(data_dir=DATA_DIR)
 markdown_generator = MarkdownGenerator(output_dir=DATA_DIR)
 config_loader = ConfigLoader()
 research_comparator = ResearchComparator(data_dir=DATA_DIR)
+saved_research_store = SavedResearchStore(data_dir=DATA_DIR)
 
 
 @app.route('/')
@@ -444,6 +446,123 @@ def api_remove_from_watchlist(ticker):
         return jsonify({'success': True, 'message': f'Removed {ticker}'})
     else:
         return jsonify({'success': False, 'message': f'{ticker} not found'})
+
+
+# ============================================================================
+# SAVED RESEARCH ROUTES
+# ============================================================================
+
+@app.route('/saved-research')
+def saved_research_page():
+    """Saved research management page."""
+    saved_items = saved_research_store.get_all()
+    
+    # Sort by date (newest first) by default
+    saved_items.sort(key=lambda x: x.saved_date, reverse=True)
+    
+    return render_template('saved_research.html', saved_items=saved_items)
+
+
+@app.route('/api/saved-research', methods=['GET'])
+def api_get_saved_research():
+    """Get all saved research items."""
+    saved_items = saved_research_store.get_all()
+    return jsonify([item.to_dict() for item in saved_items])
+
+
+@app.route('/api/saved-research', methods=['POST'])
+def api_save_research():
+    """Save a research document."""
+    data = request.get_json()
+    filename = data.get('filename', '')
+    title = data.get('title', '')
+    status = data.get('status', 'interested')
+    notes = data.get('notes', '')
+    rating = data.get('rating')
+    tags = data.get('tags', [])
+
+    if not filename:
+        return jsonify({'error': 'Filename is required'}), 400
+
+    try:
+        # Extract additional metadata from research file
+        research_path = DATA_DIR / 'research' / filename
+        if research_path.exists():
+            with open(research_path, 'r') as f:
+                content = f.read()
+            
+            # Extract tickers, sector, and TLDR from content
+            import re
+            
+            # Find tickers (simple pattern for now)
+            tickers = re.findall(r'\b[A-Z]{2,5}\b', content)
+            tickers = list(set(tickers))[:10]  # Limit to 10 unique tickers
+            
+            # Try to find sector information
+            sector_patterns = [
+                r'sector[:\s]+([^\n,.]+)',
+                r'industry[:\s]+([^\n,.]+)',
+            ]
+            sector = None
+            for pattern in sector_patterns:
+                match = re.search(pattern, content, re.IGNORECASE)
+                if match:
+                    sector = match.group(1).strip()
+                    break
+            
+            # Extract TLDR if available
+            tldr_match = re.search(r'## (?:TLDR|TL;DR|Executive Summary)[:\s]*\n(.*?)(?=\n##|\nz|$)', 
+                                 content, re.DOTALL | re.IGNORECASE)
+            tldr = tldr_match.group(1).strip()[:200] + '...' if tldr_match else None
+
+        saved_item = SavedResearch(
+            filename=filename,
+            title=title or filename.replace('.md', '').replace('_', ' '),
+            status=SavedResearchStatus(status),
+            saved_date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            notes=notes,
+            tags=tags if isinstance(tags, list) else [tags] if tags else [],
+            rating=int(rating) if rating and str(rating).isdigit() else None,
+            sector=sector,
+            tickers=tickers,
+            tldr=tldr
+        )
+
+        if saved_research_store.add(saved_item):
+            return jsonify({'success': True, 'message': f'Saved research: {title}'})
+        else:
+            return jsonify({'success': False, 'message': f'Research already saved'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/saved-research/<filename>', methods=['PUT'])
+def api_update_saved_research(filename):
+    """Update saved research item."""
+    data = request.get_json()
+    updates = {
+        k: v for k, v in data.items() 
+        if k in ['status', 'notes', 'rating', 'tags']
+    }
+    
+    # Convert status string to enum if needed
+    if 'status' in updates:
+        updates['status'] = updates['status']
+    
+    if saved_research_store.update(filename, updates):
+        return jsonify({'success': True, 'message': 'Updated successfully'})
+    else:
+        return jsonify({'success': False, 'message': 'Research item not found'})
+
+
+@app.route('/api/saved-research/<filename>', methods=['DELETE'])
+def api_remove_saved_research(filename):
+    """Remove saved research item."""
+    if saved_research_store.remove(filename):
+        return jsonify({'success': True, 'message': 'Removed from saved research'})
+    else:
+        return jsonify({'success': False, 'message': 'Research item not found'})
 
 
 # ============================================================================
