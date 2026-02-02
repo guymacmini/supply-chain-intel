@@ -233,7 +233,259 @@
       ],
       "added_date": "2026-01-28",
       "source_research": "theses/active/crypto_trading_going_20260128.md"
+    },
+    {
+      "ticker": "ZBRA",
+      "name": "ZBRA",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "MSFT",
+      "name": "MSFT",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "CRWD",
+      "name": "CRWD",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "LDOS",
+      "name": "LDOS",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "RGTI",
+      "name": "RGTI",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "KEYS",
+      "name": "KEYS",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "CSCO",
+      "name": "CSCO",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "SAIC",
+      "name": "SAIC",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "ENTG",
+      "name": "ENTG",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "OXINF",
+      "name": "OXINF",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "HON",
+      "name": "HON",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "QTUM",
+      "name": "QTUM",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "ACN",
+      "name": "ACN",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "NVDA",
+      "name": "NVDA",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "QBTS",
+      "name": "QBTS",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "LITE",
+      "name": "LITE",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "GOOG",
+      "name": "GOOG",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "LIN",
+      "name": "LIN",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "IONQ",
+      "name": "IONQ",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "AMAT",
+      "name": "AMAT",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "IBM",
+      "name": "IBM",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "FORM",
+      "name": "FORM",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "NET",
+      "name": "NET",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "PLTR",
+      "name": "PLTR",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "COHR",
+      "name": "COHR",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "MP",
+      "name": "MP",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "APD",
+      "name": "APD",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
+    },
+    {
+      "ticker": "AMZN",
+      "name": "AMZN",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-02",
+      "source_research": "quantum_computing_20260202.md"
     }
   ],
-  "last_updated": "2026-01-28T16:54:46.975115"
+  "last_updated": "2026-02-02T13:39:22.137347"
 }

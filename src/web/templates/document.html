@@ -44,6 +44,14 @@
             </svg>
             Print
         </button>
+        {% if doc_type == 'research' %}
+        <button class="btn btn-primary btn-sm" onclick="exportToPDF()" id="pdf-export-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Export PDF
+        </button>
+        {% endif %}
     </div>
 </div>
 
@@ -264,6 +272,36 @@ function downloadMarkdown() {
 // Print document
 function printDocument() {
     window.print();
+}
+
+// Export to PDF
+function exportToPDF() {
+    const btn = document.getElementById('pdf-export-btn');
+    const originalText = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Generating PDF...';
+    
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = `/export/${encodeURIComponent('{{ filename }}')}/pdf`;
+    link.download = '{{ filename }}'.replace('.md', '.pdf');
+    
+    // Add event listeners to handle completion
+    link.addEventListener('click', function() {
+        // Reset button after a short delay
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            showToast('PDF export initiated!');
+        }, 1000);
+    });
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // Toast notification

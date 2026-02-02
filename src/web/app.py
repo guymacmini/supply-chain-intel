@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
-from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader
+from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter
 from src.models import WatchlistEntity
 
 app = Flask(__name__,
@@ -136,6 +136,37 @@ def view_research(filename):
                          doc_type='research',
                          filename=filename,
                          related_research=related_research)
+
+
+@app.route('/export/<path:filename>/pdf')
+def export_research_pdf(filename):
+    """Export a research document as PDF."""
+    research_path = DATA_DIR / 'research' / filename
+    if not research_path.exists():
+        return "Research not found", 404
+
+    try:
+        # Initialize PDF exporter
+        pdf_exporter = PDFExporter()
+        
+        # Create PDF output directory
+        pdf_output_dir = DATA_DIR / 'exports' / 'pdf'
+        pdf_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Export to PDF
+        pdf_path = pdf_exporter.export_research_file(research_path, pdf_output_dir)
+        
+        # Send PDF file for download
+        from flask import send_file
+        return send_file(
+            pdf_path,
+            as_attachment=True,
+            download_name=f"{research_path.stem}.pdf",
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        app.logger.error(f"PDF export error for {filename}: {str(e)}")
+        return f"Error generating PDF: {str(e)}", 500
 
 
 def _find_related_research(filename: str) -> list:

@@ -2,7 +2,20 @@
 
 ## 🔴 High Priority (This Session)
 
-### 1. [analysis] Shortage/Bottleneck Severity Analyzer ✅
+### 1. [export] PDF Export Functionality
+**Impact**: High - enables professional report sharing  
+**Effort**: Medium  
+**Status**: IN PROGRESS (2026-02-02)
+
+Add PDF export functionality to research reports:
+- Add "Export as PDF" button to web UI
+- Convert markdown research output to clean, professional PDF
+- Preserve emoji indicators and table formatting
+- Include all sections: TLDR, analysis tables, bottleneck ratings, valuation checks, contrarian analysis
+- Route: `/export/<research_id>/pdf`
+- Technology: weasyprint or pdfkit for HTML→PDF conversion
+
+### 2. [analysis] Shortage/Bottleneck Severity Analyzer ✅
 **Impact**: High - identifies chokepoints before they become obvious  
 **Effort**: Medium  
 **Status**: DONE (2026-02-02)
