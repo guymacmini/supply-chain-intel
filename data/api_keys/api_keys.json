@@ -1,0 +1,12 @@
+{
+  "sci_RiKWJLqXGwpW0uv1u-G4cTAf9-N9K8duda3_7OxN7Eg": {
+    "name": "Default Development Key",
+    "description": "Auto-generated development API key",
+    "key_hash": "6ac50a9540b9f5d578db8c62f111bf76b9b1d4eb20e0672c1eb31b01aa2dafcb",
+    "created_at": "2026-02-03T12:36:47.476013",
+    "rate_limit": 5000,
+    "active": true,
+    "last_used": null,
+    "total_requests": 0
+  }
+}

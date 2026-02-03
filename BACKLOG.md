@@ -240,12 +240,27 @@ Link back to original research sources:
 - Added to both main research and follow-up analysis workflows
 - Provides transparency and credibility to research output for analysts
 
-### 14. [api] REST API Endpoints
+### 14. [api] REST API Endpoints ✅
+**Impact**: High - enable programmatic platform access  
+**Effort**: High  
+**Status**: DONE (2026-02-03)
+
 Programmatic access to research data:
-- GET /api/research - list all research
-- GET /api/research/:id - get specific report
-- POST /api/research - trigger new research
-- Authentication via API key
+- GET /api/research - list all research ✅
+- GET /api/research/:id - get specific report ✅
+- POST /api/research - trigger new research ✅
+- Authentication via API key ✅
+
+**IMPLEMENTATION DETAILS**: Comprehensive REST API system with enterprise-grade security:
+- Created `APIKeyManager` with secure key generation, rate limiting, and usage tracking
+- Implemented 15+ REST endpoints covering all platform functionality (research, watchlist, performance, correlations, cache management)
+- Full CRUD operations with structured JSON responses and comprehensive error handling
+- API authentication via X-API-Key header with automatic rate limiting (configurable per key)
+- Web-based API key management interface at `/admin/api-keys` with creation and monitoring
+- Usage statistics and analytics per API key with hourly/daily tracking
+- Comprehensive API documentation with usage examples integrated into web interface
+- Auto-generated default development API key for immediate testing
+- Supports programmatic research generation, data export, analysis automation, and integration with external tools
 
 ### 15. [ui] Dark Mode
 Add dark mode toggle for late-night research sessions.
