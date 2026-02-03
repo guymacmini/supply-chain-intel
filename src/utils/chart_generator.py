@@ -555,12 +555,7 @@ class InteractiveChartGenerator:
                         'title': {'display': True, 'text': 'Return (%)'},
                         'grid': {
                             'drawBorder': False,
-                            'color': function(context) {
-                                if (context.tick.value === 0) {
-                                    return '#374151';  # Darker line for zero line
-                                }
-                                return '#e5e7eb';  # Light gray for other lines
-                            }
+                            'color': 'rgba(229, 231, 235, 0.5)'  # Light gray grid lines
                         }
                     }
                 }

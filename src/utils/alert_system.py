@@ -7,10 +7,17 @@ from datetime import datetime, timedelta, time
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable, Union
 from dataclasses import dataclass, field, asdict
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
-from email.mime.base import MimeBase
-from email import encoders
+try:
+    from email.mime.text import MimeText
+    from email.mime.multipart import MimeMultipart
+    from email.mime.base import MimeBase
+    from email import encoders
+except ImportError:
+    # Python 3.14+ compatibility - class names are MIME* (uppercase)
+    from email.mime.text import MIMEText as MimeText
+    from email.mime.multipart import MIMEMultipart as MimeMultipart
+    from email.mime.base import MIMEBase as MimeBase
+    from email import encoders
 import threading
 import time as time_module
 from enum import Enum
