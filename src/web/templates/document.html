@@ -57,6 +57,18 @@
             </svg>
             Export PDF
         </button>
+        <button class="btn btn-success btn-sm" onclick="exportToExcel()" id="excel-export-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Export Excel
+        </button>
+        <button class="btn btn-info btn-sm" onclick="exportToCSV()" id="csv-export-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Export CSV
+        </button>
         {% endif %}
     </div>
 </div>
@@ -358,6 +370,66 @@ function exportToPDF() {
             btn.disabled = false;
             btn.innerHTML = originalText;
             showToast('PDF export initiated!');
+        }, 1000);
+    });
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Export to Excel
+function exportToExcel() {
+    const btn = document.getElementById('excel-export-btn');
+    const originalText = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Generating Excel...';
+    
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = `/export/${encodeURIComponent('{{ filename }}')}/excel`;
+    link.download = '{{ filename }}'.replace('.md', '.xlsx');
+    
+    // Add event listeners to handle completion
+    link.addEventListener('click', function() {
+        // Reset button after a short delay
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            showToast('Excel export initiated!');
+        }, 1000);
+    });
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Export to CSV
+function exportToCSV() {
+    const btn = document.getElementById('csv-export-btn');
+    const originalText = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Generating CSV...';
+    
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = `/export/${encodeURIComponent('{{ filename }}')}/csv`;
+    link.download = '{{ filename }}'.replace('.md', '.csv');
+    
+    // Add event listeners to handle completion
+    link.addEventListener('click', function() {
+        // Reset button after a short delay
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            showToast('CSV export initiated!');
         }, 1000);
     });
     

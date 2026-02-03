@@ -10,3 +10,5 @@ finnhub-python>=1.4.0
 tavily-python>=0.3.0
 reportlab>=4.0.0
 pytest>=9.0.0
+pandas>=2.0.0
+openpyxl>=3.1.0

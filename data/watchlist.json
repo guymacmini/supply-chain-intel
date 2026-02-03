@@ -486,7 +486,142 @@
       ],
       "added_date": "2026-02-02",
       "source_research": null
+    },
+    {
+      "ticker": "TER",
+      "name": "TER",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "MSFT",
+      "name": "MSFT",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "PANW",
+      "name": "PANW",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "GOOGL",
+      "name": "GOOGL",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "AME",
+      "name": "AME",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "EQIX",
+      "name": "EQIX",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "HPE",
+      "name": "HPE",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "UK",
+      "name": "UK",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "BAH",
+      "name": "BAH",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "DLR",
+      "name": "DLR",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "MKSI",
+      "name": "MKSI",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "VRT",
+      "name": "VRT",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "KLAC",
+      "name": "KLAC",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "CRM",
+      "name": "CRM",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "LTHM",
+      "name": "LTHM",
+      "themes": [
+        "quantum_computing"
+      ],
+      "added_date": "2026-02-03",
+      "source_research": "quantum_computing_20260203.md"
     }
   ],
-  "last_updated": "2026-02-02T19:12:04.313430"
+  "last_updated": "2026-02-03T12:09:41.151648"
 }

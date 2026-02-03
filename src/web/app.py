@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
-from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ResearchComparator
+from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator
 from src.utils.saved_research_store import SavedResearchStore
 from src.models import WatchlistEntity, SavedResearch, SavedResearchStatus
 
@@ -26,6 +26,7 @@ markdown_generator = MarkdownGenerator(output_dir=DATA_DIR)
 config_loader = ConfigLoader()
 research_comparator = ResearchComparator(data_dir=DATA_DIR)
 saved_research_store = SavedResearchStore(data_dir=DATA_DIR)
+excel_exporter = ExcelExporter(output_dir=DATA_DIR / 'exports')
 
 
 @app.route('/')
@@ -170,6 +171,111 @@ def export_research_pdf(filename):
     except Exception as e:
         app.logger.error(f"PDF export error for {filename}: {str(e)}")
         return f"Error generating PDF: {str(e)}", 500
+
+
+@app.route('/export/<path:filename>/excel')
+def export_research_excel(filename):
+    """Export a research document as Excel."""
+    research_path = DATA_DIR / 'research' / filename
+    if not research_path.exists():
+        return "Research not found", 404
+
+    try:
+        # Read research content
+        with open(research_path, 'r', encoding='utf-8') as f:
+            research_content = f.read()
+        
+        # Export to Excel
+        excel_path = excel_exporter.export_research_to_excel(research_content, filename)
+        
+        # Send Excel file for download
+        from flask import send_file
+        return send_file(
+            excel_path,
+            as_attachment=True,
+            download_name=f"{research_path.stem}.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        app.logger.error(f"Excel export error for {filename}: {str(e)}")
+        return f"Error generating Excel file: {str(e)}", 500
+
+
+@app.route('/export/<path:filename>/csv')
+def export_research_csv(filename):
+    """Export a research document as CSV."""
+    research_path = DATA_DIR / 'research' / filename
+    if not research_path.exists():
+        return "Research not found", 404
+
+    try:
+        # Read research content
+        with open(research_path, 'r', encoding='utf-8') as f:
+            research_content = f.read()
+        
+        # Export to CSV
+        csv_path = excel_exporter.export_research_to_csv(research_content, filename)
+        
+        # Send CSV file for download
+        from flask import send_file
+        return send_file(
+            csv_path,
+            as_attachment=True,
+            download_name=f"{research_path.stem}.csv",
+            mimetype='text/csv'
+        )
+    except Exception as e:
+        app.logger.error(f"CSV export error for {filename}: {str(e)}")
+        return f"Error generating CSV file: {str(e)}", 500
+
+
+@app.route('/export/watchlist/excel')
+def export_watchlist_excel():
+    """Export watchlist data as Excel."""
+    try:
+        # Get all watchlist entities
+        entities = watchlist_manager.get_all()
+        watchlist_data = [entity.to_dict() for entity in entities]
+        
+        # Export to Excel
+        excel_path = excel_exporter.export_watchlist_to_excel(watchlist_data)
+        
+        # Send Excel file for download
+        from flask import send_file
+        return send_file(
+            excel_path,
+            as_attachment=True,
+            download_name="watchlist.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        app.logger.error(f"Watchlist Excel export error: {str(e)}")
+        return f"Error generating Excel file: {str(e)}", 500
+
+
+@app.route('/export/saved-research/excel')
+def export_saved_research_excel():
+    """Export saved research data as Excel."""
+    try:
+        # Get all saved research
+        saved_research_data = []
+        for item in saved_research_store.list_all():
+            saved_research_data.append(item.to_dict())
+        
+        # Export to Excel
+        excel_path = excel_exporter.export_saved_research_to_excel(saved_research_data)
+        
+        # Send Excel file for download
+        from flask import send_file
+        return send_file(
+            excel_path,
+            as_attachment=True,
+            download_name="saved_research.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        app.logger.error(f"Saved research Excel export error: {str(e)}")
+        return f"Error generating Excel file: {str(e)}", 500
 
 
 def _find_related_research(filename: str) -> list:

@@ -7,8 +7,20 @@
 
 <div class="card">
     <div class="card-header">
-        <h2>Research Watchlist</h2>
-        <span class="badge badge-info">{{ saved_items|length }} items</span>
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <h2>Research Watchlist</h2>
+                <span class="badge badge-info">{{ saved_items|length }} items</span>
+            </div>
+            {% if saved_items %}
+            <button class="btn btn-success btn-sm" onclick="exportSavedResearchToExcel()" id="saved-research-export-btn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Export Excel
+            </button>
+            {% endif %}
+        </div>
     </div>
     
     <div style="margin-bottom: 1rem;">
@@ -346,6 +358,54 @@ window.onclick = function(event) {
     if (event.target === modal) {
         closeEditModal();
     }
+}
+
+// Export saved research to Excel
+function exportSavedResearchToExcel() {
+    const btn = document.getElementById('saved-research-export-btn');
+    const originalText = btn.innerHTML;
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Generating Excel...';
+    
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = `/export/saved-research/excel`;
+    link.download = 'saved_research.xlsx';
+    
+    // Add event listeners to handle completion
+    link.addEventListener('click', function() {
+        // Reset button after a short delay
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            showToast('Saved research Excel export initiated!');
+        }, 1000);
+    });
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Toast notification
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} fade-in`;
+    toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; min-width: 200px;';
+    
+    let icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+    
+    toast.innerHTML = `
+        <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${icon}
+        </svg>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 </script>
 
