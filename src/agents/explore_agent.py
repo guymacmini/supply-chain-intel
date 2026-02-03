@@ -17,6 +17,7 @@ from ..utils.tavily_client import TavilyClient
 from ..utils.source_tracker import SourceTracker
 from ..utils.historical_tracker import HistoricalTracker
 from ..utils.correlation_analyzer import MultiThemeCorrelationAnalyzer
+from ..utils.sector_cache import SectorAnalysisCache
 from ..analysis.shortage_analyzer import ShortageAnalyzer, analyze_bottlenecks
 from ..analysis.valuation_checker import ValuationChecker, check_valuations
 from ..analysis.demand_analyzer import DemandAnalyzer, analyze_demand
@@ -437,10 +438,11 @@ class ExploreAgent(BaseAgent):
         self.enable_cache = enable_cache
         self.source_tracker = SourceTracker()
         
-        # Initialize historical tracker and correlation analyzer
+        # Initialize historical tracker, correlation analyzer, and sector cache
         DATA_DIR = Path(__file__).parent.parent.parent / 'data'
         self.historical_tracker = HistoricalTracker(DATA_DIR, self.finnhub_client)
         self.correlation_analyzer = MultiThemeCorrelationAnalyzer(DATA_DIR)
+        self.sector_cache = SectorAnalysisCache(DATA_DIR / 'cache', default_ttl_hours=12)
         
         # Ensure cache directory exists
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -448,6 +450,63 @@ class ExploreAgent(BaseAgent):
     def _get_cache_key(self, query: str) -> str:
         """Generate a cache key for a search query."""
         return hashlib.md5(query.lower().encode()).hexdigest()
+    
+    def _detect_sector_from_query(self, query: str) -> Optional[str]:
+        """Detect if a query is sector-related and return sector name.
+        
+        Args:
+            query: Search query
+            
+        Returns:
+            Sector name if detected, None otherwise
+        """
+        query_lower = query.lower()
+        
+        # Common sector keywords
+        sector_keywords = {
+            'technology': ['tech', 'technology', 'software', 'hardware', 'semiconductors', 'chips'],
+            'healthcare': ['healthcare', 'pharma', 'pharmaceutical', 'biotech', 'medical', 'drugs'],
+            'energy': ['energy', 'oil', 'gas', 'renewable', 'solar', 'wind', 'nuclear'],
+            'financial': ['finance', 'financial', 'banking', 'insurance', 'fintech'],
+            'consumer': ['consumer', 'retail', 'ecommerce', 'brands', 'goods'],
+            'industrial': ['industrial', 'manufacturing', 'aerospace', 'defense', 'machinery'],
+            'materials': ['materials', 'mining', 'metals', 'chemicals', 'commodities'],
+            'utilities': ['utilities', 'electric', 'water', 'telecom', 'telecommunications'],
+            'real estate': ['real estate', 'reit', 'property', 'housing', 'construction'],
+            'automotive': ['automotive', 'cars', 'vehicles', 'transportation', 'mobility']
+        }
+        
+        # Check for sector matches
+        for sector, keywords in sector_keywords.items():
+            for keyword in keywords:
+                if keyword in query_lower:
+                    return sector
+        
+        # Check for specific industry mentions
+        industry_patterns = [
+            'artificial intelligence', 'ai infrastructure', 'quantum computing',
+            'cloud computing', 'cybersecurity', 'fintech', 'biotech',
+            'clean energy', 'electric vehicles', 'supply chain'
+        ]
+        
+        for pattern in industry_patterns:
+            if pattern in query_lower:
+                # Map specific industries to broader sectors
+                industry_to_sector = {
+                    'artificial intelligence': 'technology',
+                    'ai infrastructure': 'technology', 
+                    'quantum computing': 'technology',
+                    'cloud computing': 'technology',
+                    'cybersecurity': 'technology',
+                    'fintech': 'financial',
+                    'biotech': 'healthcare',
+                    'clean energy': 'energy',
+                    'electric vehicles': 'automotive',
+                    'supply chain': 'industrial'
+                }
+                return industry_to_sector.get(pattern, 'technology')
+        
+        return None
 
     def _get_cached_search(self, query: str) -> Optional[str]:
         """Get cached search result if available and fresh (24h)."""
@@ -526,8 +585,19 @@ Craft specific, targeted queries for best results.""",
         if tool_name == "web_search":
             query = tool_input.get('query', '')
             search_type = tool_input.get('search_type', 'general')
+            
+            # Detect if this is a sector-related query
+            sector_name = self._detect_sector_from_query(query)
 
-            # Check cache first
+            # Check sector cache first if this is sector-related
+            if sector_name:
+                cached_sector_data = self.sector_cache.get_tavily_sector_data(sector_name, search_type)
+                if cached_sector_data:
+                    self.source_tracker.add_cache_source(query)
+                    formatted = self.tavily_client.format_results_as_text(cached_sector_data) if hasattr(self.tavily_client, 'format_results_as_text') else str(cached_sector_data)
+                    return f"[Cached sector results for: {query}]\n{formatted}"
+
+            # Check general cache
             cached = self._get_cached_search(query)
             if cached:
                 self.source_tracker.add_cache_source(query)
@@ -551,7 +621,14 @@ Craft specific, targeted queries for best results.""",
                             self.source_tracker.add_tavily_source(query, result)
                         
                         formatted = self.tavily_client.format_results_as_text(results)
+                        
+                        # Cache to both general cache and sector cache if applicable
                         self._save_to_cache(query, formatted)
+                        
+                        if sector_name:
+                            self.sector_cache.set_tavily_sector_data(sector_name, search_type, results)
+                            logger.debug(f"Cached sector data for {sector_name} ({search_type})")
+                        
                         return f"[Tavily search results for: {query}]\n{formatted}"
                         
                 except Exception as e:
@@ -681,6 +758,17 @@ Craft specific, targeted queries for best results.""",
                 content += correlation_section
         except Exception as e:
             logger.warning(f"Correlation analysis failed: {e}")
+        
+        # Add cache performance report  
+        logger.info("Generating cache performance report...")
+        try:
+            # Clean up expired entries and generate report
+            self.sector_cache.cleanup_expired_entries()
+            cache_section = self.sector_cache.generate_cache_report()
+            if cache_section:
+                content += cache_section
+        except Exception as e:
+            logger.warning(f"Cache report generation failed: {e}")
         
         # Add historical performance report
         logger.info("Generating historical performance report...")

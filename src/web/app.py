@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
-from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator, HistoricalTracker, MultiThemeCorrelationAnalyzer
+from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator, HistoricalTracker, MultiThemeCorrelationAnalyzer, SectorAnalysisCache
 from src.utils.saved_research_store import SavedResearchStore
 from src.models import WatchlistEntity, SavedResearch, SavedResearchStatus
 
@@ -29,6 +29,7 @@ saved_research_store = SavedResearchStore(data_dir=DATA_DIR)
 excel_exporter = ExcelExporter(output_dir=DATA_DIR / 'exports')
 historical_tracker = HistoricalTracker(data_dir=DATA_DIR)
 correlation_analyzer = MultiThemeCorrelationAnalyzer(data_dir=DATA_DIR)
+sector_cache = SectorAnalysisCache(cache_dir=DATA_DIR / 'cache', default_ttl_hours=12)
 
 
 @app.route('/')
@@ -805,6 +806,61 @@ def api_analyze_correlations():
             'success': True,
             'overlaps': [o.to_dict() for o in overlaps],
             'opportunities': [o.to_dict() for o in opportunities[:20]]  # Limit to top 20
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/cache/stats')
+def api_cache_stats():
+    """API endpoint to get cache statistics."""
+    try:
+        stats = sector_cache.get_cache_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/cache/cleanup', methods=['POST'])
+def api_cache_cleanup():
+    """API endpoint to cleanup expired cache entries."""
+    try:
+        cleaned = sector_cache.cleanup_expired_entries()
+        return jsonify({
+            'success': True,
+            'entries_cleaned': cleaned,
+            'message': f'Cleaned up {cleaned} expired cache entries'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/cache/clear', methods=['POST'])
+def api_cache_clear():
+    """API endpoint to clear all cached data."""
+    try:
+        data = request.get_json() or {}
+        sector = data.get('sector')
+        
+        if sector:
+            # Clear specific sector
+            cleared = sector_cache.invalidate_sector(sector)
+            message = f'Cleared {cleared} entries for sector: {sector}'
+        else:
+            # Clear all cache
+            cleared = sector_cache.clear_all_caches()
+            message = f'Cleared all cache data ({cleared} entries)'
+        
+        return jsonify({
+            'success': True,
+            'entries_cleared': cleared,
+            'message': message
         })
     except Exception as e:
         return jsonify({

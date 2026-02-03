@@ -157,8 +157,27 @@ Cache sector-level research to avoid redundant API calls.
 ### 10. [ui] Interactive Charts Dashboard
 Move beyond markdown to interactive charts (Chart.js or Plotly).
 
-### 11. [agents] Multi-theme Correlation
+### 11. [agents] Multi-theme Correlation ✅
+**Impact**: High - identify overlooked cross-theme opportunities  
+**Effort**: Medium  
+**Status**: DONE (2026-02-03)
+
 Identify cross-theme opportunities and conflicts.
+- Analyze overlapping companies across multiple themes ✅
+- Detect complementary vs conflicting theme relationships ✅
+- Identify multi-theme winners and losers ✅
+- Generate cross-theme insights and correlations ✅
+
+**IMPLEMENTATION DETAILS**: Comprehensive multi-theme correlation analysis system:
+- Created `MultiThemeCorrelationAnalyzer` with sophisticated pattern matching for company extraction  
+- Added `ThemeOverlap` and `CrossThemeOpportunity` models with full correlation analysis
+- Sentiment analysis to detect positive/negative exposure across themes
+- Correlation classification: complementary, conflicting, independent relationships
+- Cross-theme opportunity identification: multi-theme winners, conflicts, diversified plays
+- Web interface at `/correlations` with interactive theme selection and filtering
+- API endpoints for dynamic correlation analysis and real-time insights
+- Integrated with ExploreAgent for automatic correlation analysis in research documents
+- Supports confidence scoring and risk factor analysis for each opportunity type
 
 ### 12. [data] Historical Analysis Tracking ✅
 **Impact**: High - measure research accuracy over time  
