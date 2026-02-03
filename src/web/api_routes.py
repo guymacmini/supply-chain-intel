@@ -829,4 +829,141 @@ def create_api_blueprint(data_dir: Path, api_key_manager) -> Blueprint:
         except Exception as e:
             return jsonify({'status': 'error', 'error': str(e)}), 500
     
+    # ============================================================================
+    # CHARTS ENDPOINTS  
+    # ============================================================================
+    
+    # Import chart generator
+    from ..utils.chart_generator import InteractiveChartGenerator
+    chart_generator = InteractiveChartGenerator(data_dir)
+    
+    @api.route('/charts/<chart_type>', methods=['GET'])
+    @auth_required
+    def get_chart_data(chart_type: str):
+        """Get chart data for a specific chart type."""
+        try:
+            # Parse query parameters
+            ticker = request.args.get('ticker', 'AAPL')
+            days = int(request.args.get('days', 90))
+            
+            chart_data = None
+            
+            if chart_type == 'sector_distribution':
+                chart_data = chart_generator.generate_sector_distribution_chart()
+            elif chart_type == 'quality_trends':
+                chart_data = chart_generator.generate_quality_trends_chart(days=days)
+            elif chart_type == 'research_volume':
+                chart_data = chart_generator.generate_research_volume_chart()
+            elif chart_type == 'price_chart':
+                chart_data = chart_generator.generate_price_chart(ticker=ticker, period_days=days)
+            elif chart_type == 'ticker_comparison':
+                tickers = request.args.get('tickers', 'AAPL,MSFT,GOOGL').split(',')
+                chart_data = chart_generator.generate_multi_ticker_comparison(tickers[:5])  # Limit to 5
+            elif chart_type == 'correlation_heatmap':
+                tickers = request.args.get('tickers', 'AAPL,MSFT,GOOGL,AMZN,TSLA').split(',')
+                chart_data = chart_generator.generate_ticker_correlation_heatmap(tickers[:5])
+            elif chart_type == 'performance_scatter':
+                chart_data = chart_generator.generate_performance_scatter_plot()
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'error': f'Unknown chart type: {chart_type}'
+                }), 400
+            
+            if chart_data:
+                return jsonify({
+                    'status': 'success',
+                    'data': chart_data.to_dict()
+                })
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'error': 'Failed to generate chart data'
+                }), 500
+                
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/charts/dashboard', methods=['GET'])
+    @auth_required
+    def get_dashboard_charts():
+        """Get all dashboard charts at once."""
+        try:
+            charts = chart_generator.generate_dashboard_charts()
+            
+            # Convert ChartData objects to dictionaries
+            charts_data = {name: chart.to_dict() for name, chart in charts.items()}
+            
+            return jsonify({
+                'status': 'success',
+                'data': charts_data
+            })
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/charts/export', methods=['POST'])
+    @auth_required
+    def export_chart_data():
+        """Export all chart data to file."""
+        try:
+            data = request.get_json() or {}
+            format_type = data.get('format', 'json')
+            
+            # Generate all charts
+            charts = chart_generator.generate_dashboard_charts()
+            
+            if format_type == 'json':
+                # Export as JSON
+                charts_data = {name: chart.to_dict() for name, chart in charts.items()}
+                
+                # Create response
+                from flask import make_response
+                response = make_response(json.dumps(charts_data, indent=2))
+                response.headers['Content-Type'] = 'application/json'
+                response.headers['Content-Disposition'] = f'attachment; filename=charts-{datetime.now().strftime("%Y%m%d")}.json'
+                
+                return response
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'error': 'Only JSON format is currently supported'
+                }), 400
+                
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/charts/custom', methods=['POST'])
+    @auth_required
+    def create_custom_chart():
+        """Create a custom chart with user-specified parameters."""
+        try:
+            data = request.get_json()
+            chart_type = data.get('chart_type', 'line')
+            
+            if chart_type == 'price':
+                ticker = data.get('ticker', 'AAPL')
+                days = data.get('days', 90)
+                chart_data = chart_generator.generate_price_chart(ticker=ticker, period_days=days)
+            elif chart_type == 'correlation':
+                tickers = data.get('tickers', ['AAPL', 'MSFT'])
+                chart_data = chart_generator.generate_ticker_correlation_heatmap(tickers)
+            elif chart_type == 'comparison':
+                tickers = data.get('tickers', ['AAPL', 'MSFT'])
+                metrics = data.get('metrics', ['price', 'market_cap'])
+                chart_data = chart_generator.generate_multi_ticker_comparison(tickers, metrics)
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'error': f'Unsupported chart type: {chart_type}'
+                }), 400
+            
+            return jsonify({
+                'status': 'success',
+                'data': chart_data.to_dict()
+            })
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
     return api

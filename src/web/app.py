@@ -77,6 +77,12 @@ def alerts_page():
     return render_template('alerts.html')
 
 
+@app.route('/charts')
+def charts_page():
+    """Interactive charts dashboard page."""
+    return render_template('charts.html')
+
+
 @app.route('/api/explore', methods=['POST'])
 def api_explore():
     """API endpoint to run exploration."""

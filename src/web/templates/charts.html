@@ -1,0 +1,867 @@
+{% extends "base.html" %}
+
+{% block title %}Interactive Charts - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-content">
+        <div class="header-text">
+            <h1 class="page-title">📊 Interactive Charts</h1>
+            <p class="page-description">Visualize research data, market trends, and performance metrics with interactive charts</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="refreshAllCharts()">
+                <span class="btn-icon">🔄</span>
+                Refresh Charts
+            </button>
+            <button class="btn btn-secondary" onclick="exportCharts()">
+                <span class="btn-icon">📤</span>
+                Export Data
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Chart Controls -->
+<div class="chart-controls">
+    <div class="control-group">
+        <label for="chart-theme">Chart Theme:</label>
+        <select id="chart-theme" onchange="updateChartTheme(this.value)">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+        </select>
+    </div>
+    
+    <div class="control-group">
+        <label for="time-period">Time Period:</label>
+        <select id="time-period" onchange="updateTimePeriod(this.value)">
+            <option value="30">30 Days</option>
+            <option value="90" selected>90 Days</option>
+            <option value="180">6 Months</option>
+            <option value="365">1 Year</option>
+        </select>
+    </div>
+    
+    <div class="control-group">
+        <label for="ticker-filter">Focus Ticker:</label>
+        <input type="text" id="ticker-filter" placeholder="e.g. AAPL" onchange="updateTickerFocus(this.value)">
+    </div>
+</div>
+
+<!-- Charts Grid -->
+<div class="charts-grid">
+    
+    <!-- Research Overview Charts -->
+    <div class="chart-section">
+        <h2 class="section-title">📈 Research Overview</h2>
+        
+        <div class="chart-row">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Research Distribution by Sector</h3>
+                    <div class="chart-actions">
+                        <button onclick="refreshChart('sector-distribution')" title="Refresh">🔄</button>
+                        <button onclick="exportChart('sector-distribution')" title="Export">📤</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="sector-distribution-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Research Quality Trends</h3>
+                    <div class="chart-actions">
+                        <button onclick="refreshChart('quality-trends')" title="Refresh">🔄</button>
+                        <button onclick="exportChart('quality-trends')" title="Export">📤</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="quality-trends-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-row">
+            <div class="chart-container chart-full">
+                <div class="chart-header">
+                    <h3>Research Volume by Month</h3>
+                    <div class="chart-actions">
+                        <button onclick="refreshChart('research-volume')" title="Refresh">🔄</button>
+                        <button onclick="exportChart('research-volume')" title="Export">📤</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="research-volume-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Market Data Charts -->
+    <div class="chart-section">
+        <h2 class="section-title">💹 Market Analysis</h2>
+        
+        <div class="chart-row">
+            <div class="chart-container chart-full">
+                <div class="chart-header">
+                    <h3>Price Chart</h3>
+                    <div class="chart-controls-inline">
+                        <select id="price-chart-ticker" onchange="updatePriceChart(this.value)">
+                            <option value="AAPL">Apple (AAPL)</option>
+                            <option value="MSFT">Microsoft (MSFT)</option>
+                            <option value="GOOGL">Alphabet (GOOGL)</option>
+                            <option value="AMZN">Amazon (AMZN)</option>
+                            <option value="TSLA">Tesla (TSLA)</option>
+                        </select>
+                    </div>
+                    <div class="chart-actions">
+                        <button onclick="refreshChart('price-chart')" title="Refresh">🔄</button>
+                        <button onclick="exportChart('price-chart')" title="Export">📤</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="price-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-row">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Multi-Ticker Comparison</h3>
+                    <div class="chart-actions">
+                        <button onclick="refreshChart('ticker-comparison')" title="Refresh">🔄</button>
+                        <button onclick="exportChart('ticker-comparison')" title="Export">📤</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="ticker-comparison-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Correlation Heatmap</h3>
+                    <div class="chart-actions">
+                        <button onclick="refreshChart('correlation-heatmap')" title="Refresh">🔄</button>
+                        <button onclick="exportChart('correlation-heatmap')" title="Export">📤</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <div id="correlation-heatmap"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Charts -->
+    <div class="chart-section">
+        <h2 class="section-title">🎯 Performance Analysis</h2>
+        
+        <div class="chart-row">
+            <div class="chart-container chart-full">
+                <div class="chart-header">
+                    <h3>Investment Thesis Performance vs Confidence</h3>
+                    <div class="chart-actions">
+                        <button onclick="refreshChart('performance-scatter')" title="Refresh">🔄</button>
+                        <button onclick="exportChart('performance-scatter')" title="Export">📤</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="performance-scatter-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>Generating charts...</p>
+    </div>
+</div>
+
+<style>
+/* Chart-specific styles */
+.chart-controls {
+    background: white;
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.control-group label {
+    font-weight: 500;
+    color: var(--gray-700);
+    white-space: nowrap;
+}
+
+.control-group select,
+.control-group input {
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-size: 14px;
+}
+
+.charts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.chart-section {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0 0 25px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.chart-row:last-child {
+    margin-bottom: 0;
+}
+
+.chart-container {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    position: relative;
+}
+
+.chart-container.chart-full {
+    grid-column: 1 / -1;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.chart-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin: 0;
+}
+
+.chart-controls-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.chart-actions button {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.chart-actions button:hover {
+    background: var(--gray-200);
+    border-color: var(--gray-400);
+}
+
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    background: white;
+    border-radius: var(--radius);
+    padding: 15px;
+    box-shadow: var(--shadow-sm);
+}
+
+.chart-wrapper canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#correlation-heatmap {
+    width: 100%;
+    height: 100%;
+    min-height: 350px;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    background: white;
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--gray-200);
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Dark theme */
+.chart-theme-dark {
+    background: var(--gray-900);
+    color: var(--gray-100);
+}
+
+.chart-theme-dark .chart-section {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.chart-theme-dark .chart-container {
+    background: var(--gray-700);
+    border-color: var(--gray-600);
+}
+
+.chart-theme-dark .chart-wrapper {
+    background: var(--gray-800);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    .chart-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .chart-actions {
+        align-self: flex-end;
+    }
+    
+    .chart-wrapper {
+        height: 300px;
+        padding: 10px;
+    }
+    
+    .chart-controls-inline {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<!-- Include Plotly.js for heatmaps -->
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script>
+// Global chart instances
+let chartInstances = {};
+let chartTheme = 'light';
+let currentTimePeriod = 90;
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+// Initialize all charts
+function initializeCharts() {
+    showLoading();
+    
+    // Load chart data from API
+    Promise.all([
+        loadChartData('sector_distribution'),
+        loadChartData('quality_trends'),
+        loadChartData('research_volume'),
+        loadChartData('price_chart'),
+        loadChartData('ticker_comparison'),
+        loadChartData('correlation_heatmap'),
+        loadChartData('performance_scatter')
+    ]).then(results => {
+        const [
+            sectorData,
+            qualityData,
+            volumeData,
+            priceData,
+            comparisonData,
+            correlationData,
+            performanceData
+        ] = results;
+        
+        // Create charts
+        if (sectorData) createSectorChart(sectorData);
+        if (qualityData) createQualityTrendsChart(qualityData);
+        if (volumeData) createVolumeChart(volumeData);
+        if (priceData) createPriceChart(priceData);
+        if (comparisonData) createComparisonChart(comparisonData);
+        if (correlationData) createCorrelationHeatmap(correlationData);
+        if (performanceData) createPerformanceScatterChart(performanceData);
+        
+        hideLoading();
+    }).catch(error => {
+        console.error('Error loading charts:', error);
+        hideLoading();
+        showError('Failed to load chart data. Please try refreshing the page.');
+    });
+}
+
+// Load chart data from API
+async function loadChartData(chartType) {
+    try {
+        const response = await fetch(`/api/charts/${chartType}`);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        return data.status === 'success' ? data.data : null;
+    } catch (error) {
+        console.error(`Error loading ${chartType} chart data:`, error);
+        return null;
+    }
+}
+
+// Create sector distribution chart
+function createSectorChart(chartData) {
+    const ctx = document.getElementById('sector-distribution-chart').getContext('2d');
+    
+    if (chartInstances['sectorChart']) {
+        chartInstances['sectorChart'].destroy();
+    }
+    
+    chartInstances['sectorChart'] = new Chart(ctx, {
+        type: chartData.chart_type || 'doughnut',
+        data: chartData.data,
+        options: {
+            ...chartData.options,
+            plugins: {
+                ...chartData.options.plugins,
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((context.parsed / total) * 100);
+                            return `${context.label}: ${context.parsed} documents (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Create quality trends chart
+function createQualityTrendsChart(chartData) {
+    const ctx = document.getElementById('quality-trends-chart').getContext('2d');
+    
+    if (chartInstances['qualityChart']) {
+        chartInstances['qualityChart'].destroy();
+    }
+    
+    chartInstances['qualityChart'] = new Chart(ctx, {
+        type: chartData.chart_type || 'line',
+        data: chartData.data,
+        options: chartData.options
+    });
+}
+
+// Create research volume chart
+function createVolumeChart(chartData) {
+    const ctx = document.getElementById('research-volume-chart').getContext('2d');
+    
+    if (chartInstances['volumeChart']) {
+        chartInstances['volumeChart'].destroy();
+    }
+    
+    chartInstances['volumeChart'] = new Chart(ctx, {
+        type: chartData.chart_type || 'bar',
+        data: chartData.data,
+        options: chartData.options
+    });
+}
+
+// Create price chart
+function createPriceChart(chartData) {
+    const ctx = document.getElementById('price-chart').getContext('2d');
+    
+    if (chartInstances['priceChart']) {
+        chartInstances['priceChart'].destroy();
+    }
+    
+    chartInstances['priceChart'] = new Chart(ctx, {
+        type: chartData.chart_type || 'line',
+        data: chartData.data,
+        options: chartData.options
+    });
+}
+
+// Create ticker comparison chart
+function createComparisonChart(chartData) {
+    const ctx = document.getElementById('ticker-comparison-chart').getContext('2d');
+    
+    if (chartInstances['comparisonChart']) {
+        chartInstances['comparisonChart'].destroy();
+    }
+    
+    chartInstances['comparisonChart'] = new Chart(ctx, {
+        type: chartData.chart_type || 'bar',
+        data: chartData.data,
+        options: chartData.options
+    });
+}
+
+// Create correlation heatmap using Plotly
+function createCorrelationHeatmap(chartData) {
+    const element = document.getElementById('correlation-heatmap');
+    
+    if (chartData && chartData.data && chartData.data.data) {
+        Plotly.newPlot(element, chartData.data.data, chartData.data.layout, {
+            responsive: true,
+            displayModeBar: false
+        });
+        
+        chartInstances['correlationHeatmap'] = element;
+    }
+}
+
+// Create performance scatter chart
+function createPerformanceScatterChart(chartData) {
+    const ctx = document.getElementById('performance-scatter-chart').getContext('2d');
+    
+    if (chartInstances['performanceChart']) {
+        chartInstances['performanceChart'].destroy();
+    }
+    
+    chartInstances['performanceChart'] = new Chart(ctx, {
+        type: chartData.chart_type || 'scatter',
+        data: chartData.data,
+        options: {
+            ...chartData.options,
+            plugins: {
+                ...chartData.options.plugins,
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].raw.label || `Point ${context[0].dataIndex + 1}`;
+                        },
+                        label: function(context) {
+                            return `Confidence: ${context.parsed.x.toFixed(1)}%, Return: ${context.parsed.y.toFixed(1)}%`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Refresh specific chart
+function refreshChart(chartName) {
+    showLoading();
+    
+    const chartTypeMap = {
+        'sector-distribution': 'sector_distribution',
+        'quality-trends': 'quality_trends',
+        'research-volume': 'research_volume',
+        'price-chart': 'price_chart',
+        'ticker-comparison': 'ticker_comparison',
+        'correlation-heatmap': 'correlation_heatmap',
+        'performance-scatter': 'performance_scatter'
+    };
+    
+    const chartType = chartTypeMap[chartName];
+    if (!chartType) {
+        hideLoading();
+        return;
+    }
+    
+    loadChartData(chartType).then(data => {
+        if (data) {
+            switch (chartName) {
+                case 'sector-distribution':
+                    createSectorChart(data);
+                    break;
+                case 'quality-trends':
+                    createQualityTrendsChart(data);
+                    break;
+                case 'research-volume':
+                    createVolumeChart(data);
+                    break;
+                case 'price-chart':
+                    createPriceChart(data);
+                    break;
+                case 'ticker-comparison':
+                    createComparisonChart(data);
+                    break;
+                case 'correlation-heatmap':
+                    createCorrelationHeatmap(data);
+                    break;
+                case 'performance-scatter':
+                    createPerformanceScatterChart(data);
+                    break;
+            }
+        }
+        hideLoading();
+    }).catch(error => {
+        console.error(`Error refreshing ${chartName}:`, error);
+        hideLoading();
+        showError(`Failed to refresh ${chartName.replace('-', ' ')} chart`);
+    });
+}
+
+// Refresh all charts
+function refreshAllCharts() {
+    initializeCharts();
+}
+
+// Export chart data
+function exportChart(chartName) {
+    const chart = chartInstances[chartName.replace('-', '') + 'Chart'];
+    if (!chart) {
+        showError('Chart not available for export');
+        return;
+    }
+    
+    // Export as PNG image
+    const canvas = chart.canvas || chart;
+    const link = document.createElement('a');
+    link.download = `${chartName}-${new Date().toISOString().split('T')[0]}.png`;
+    link.href = canvas.toDataURL ? canvas.toDataURL() : '';
+    link.click();
+}
+
+// Export all charts data
+function exportCharts() {
+    showInfo('Exporting chart data...');
+    
+    fetch('/api/charts/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format: 'json' })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.style.display = 'none';
+        link.href = url;
+        link.download = `charts-data-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+        showSuccess('Chart data exported successfully!');
+    })
+    .catch(error => {
+        console.error('Export error:', error);
+        showError('Failed to export chart data');
+    });
+}
+
+// Update chart theme
+function updateChartTheme(theme) {
+    chartTheme = theme;
+    document.body.classList.toggle('chart-theme-dark', theme === 'dark');
+    
+    // Update Chart.js default colors for theme
+    if (theme === 'dark') {
+        Chart.defaults.color = '#e5e7eb';
+        Chart.defaults.borderColor = '#374151';
+        Chart.defaults.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+    } else {
+        Chart.defaults.color = '#374151';
+        Chart.defaults.borderColor = '#e5e7eb';
+        Chart.defaults.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+    }
+    
+    // Refresh all charts to apply new theme
+    refreshAllCharts();
+}
+
+// Update time period
+function updateTimePeriod(days) {
+    currentTimePeriod = parseInt(days);
+    
+    // Refresh time-sensitive charts
+    refreshChart('quality-trends');
+    refreshChart('price-chart');
+}
+
+// Update ticker focus
+function updateTickerFocus(ticker) {
+    if (!ticker || ticker.trim() === '') {
+        return;
+    }
+    
+    const upperTicker = ticker.trim().toUpperCase();
+    document.getElementById('price-chart-ticker').value = upperTicker;
+    updatePriceChart(upperTicker);
+}
+
+// Update price chart for specific ticker
+function updatePriceChart(ticker) {
+    showLoading();
+    
+    fetch(`/api/charts/price_chart?ticker=${ticker}&days=${currentTimePeriod}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                createPriceChart(data.data);
+            } else {
+                showError(`Failed to load price chart for ${ticker}`);
+            }
+            hideLoading();
+        })
+        .catch(error => {
+            console.error('Error updating price chart:', error);
+            hideLoading();
+            showError('Failed to update price chart');
+        });
+}
+
+// Utility functions
+function showLoading() {
+    document.getElementById('loading-overlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}
+
+function showSuccess(message) {
+    showNotification(message, 'success');
+}
+
+function showError(message) {
+    showNotification(message, 'error');
+}
+
+function showInfo(message) {
+    showNotification(message, 'info');
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 400px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    `;
+    
+    // Set background color based on type
+    switch (type) {
+        case 'success':
+            notification.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            break;
+        case 'error':
+            notification.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+            break;
+        default:
+            notification.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+}
+
+// Handle window resize
+window.addEventListener('resize', function() {
+    // Resize charts to fit new dimensions
+    Object.values(chartInstances).forEach(chart => {
+        if (chart && typeof chart.resize === 'function') {
+            chart.resize();
+        } else if (chart && chart.id === 'correlation-heatmap') {
+            // Resize Plotly chart
+            Plotly.Plots.resize(chart);
+        }
+    });
+});
+</script>
+{% endblock %}
