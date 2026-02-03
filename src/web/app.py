@@ -14,6 +14,8 @@ from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
 from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator, HistoricalTracker, MultiThemeCorrelationAnalyzer, SectorAnalysisCache
 from src.utils.saved_research_store import SavedResearchStore
 from src.models import WatchlistEntity, SavedResearch, SavedResearchStatus
+from .api_auth import APIKeyManager, create_default_api_key
+from .api_routes import create_api_blueprint
 
 app = Flask(__name__,
             template_folder=str(Path(__file__).parent / 'templates'),
@@ -30,6 +32,16 @@ excel_exporter = ExcelExporter(output_dir=DATA_DIR / 'exports')
 historical_tracker = HistoricalTracker(data_dir=DATA_DIR)
 correlation_analyzer = MultiThemeCorrelationAnalyzer(data_dir=DATA_DIR)
 sector_cache = SectorAnalysisCache(cache_dir=DATA_DIR / 'cache', default_ttl_hours=12)
+
+# Initialize API authentication
+api_key_manager = APIKeyManager(data_dir=DATA_DIR)
+
+# Create default API key for development
+create_default_api_key(api_key_manager)
+
+# Register API blueprint
+api_blueprint = create_api_blueprint(DATA_DIR, api_key_manager)
+app.register_blueprint(api_blueprint)
 
 
 @app.route('/')
@@ -862,6 +874,73 @@ def api_cache_clear():
             'entries_cleared': cleared,
             'message': message
         })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/admin/api-keys')
+def api_keys_page():
+    """API key management page."""
+    try:
+        keys = api_key_manager.list_keys()
+        stats = api_key_manager.get_usage_stats()
+        
+        return render_template('api_keys.html', keys=keys, stats=stats)
+    except Exception as e:
+        app.logger.error(f"API keys page error: {str(e)}")
+        return render_template('api_keys.html', keys=[], stats={})
+
+
+@app.route('/api/admin/api-keys', methods=['POST'])
+def create_api_key():
+    """Create a new API key."""
+    try:
+        data = request.get_json() or {}
+        name = data.get('name', 'Unnamed Key')
+        description = data.get('description', '')
+        rate_limit = data.get('rate_limit', 1000)
+        
+        key_info = api_key_manager.create_api_key(
+            name=name,
+            description=description,
+            rate_limit=rate_limit
+        )
+        
+        return jsonify({
+            'success': True,
+            'key_info': key_info,
+            'message': 'API key created successfully'
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/admin/api-keys/<api_key>/deactivate', methods=['POST'])
+def deactivate_api_key(api_key: str):
+    """Deactivate an API key."""
+    try:
+        # For security, we need the full key to deactivate
+        # This should be called with the full key from the client
+        success = api_key_manager.deactivate_key(api_key)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'API key deactivated successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'API key not found'
+            }), 404
+            
     except Exception as e:
         return jsonify({
             'success': False,
