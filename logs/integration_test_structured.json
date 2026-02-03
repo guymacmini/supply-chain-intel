@@ -1,0 +1,2 @@
+{"timestamp": "2026-02-03 13:12:08,550", "level": "INFO", "logger": "integration_test", "message": "Integration test started | {"debug_mode": true, "log_level": "DEBUG", "environment": "development"}"}
+{"timestamp": "2026-02-03 13:12:08,550", "level": "INFO", "logger": "integration_test", "message": "Configuration accessed | {"api_timeout": 30, "cache_enabled": true}"}
