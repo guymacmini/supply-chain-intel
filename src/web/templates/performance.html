@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Tracking - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <h1>Historical Performance Tracking</h1>
+    <button class="btn btn-primary btn-sm" onclick="updateAllPerformance()" id="update-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Update Performance
+    </button>
+</div>
+
+<!-- Performance Summary -->
+<div class="grid grid-3 mb-6">
+    <div class="card">
+        <div class="card-header">
+            <h2>Hit Rate</h2>
+        </div>
+        <div class="text-center">
+            <div class="text-3xl font-bold {% if stats['hit_rate_pct'] >= 60 %}text-success{% elif stats['hit_rate_pct'] >= 40 %}text-warning{% else %}text-danger{% endif %}">
+                {{ stats['hit_rate_pct'] }}%
+            </div>
+            <div class="text-sm text-muted">{{ stats['success_count'] }}/{{ stats['total_theses'] }} successful</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Average Return</h2>
+        </div>
+        <div class="text-center">
+            <div class="text-3xl font-bold {% if stats['avg_return_pct'] > 0 %}text-success{% else %}text-danger{% endif %}">
+                {{ "+" if stats['avg_return_pct'] > 0 else "" }}{{ stats['avg_return_pct'] }}%
+            </div>
+            <div class="text-sm text-muted">{{ stats['concluded_count'] }} completed theses</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Active Tracking</h2>
+        </div>
+        <div class="text-center">
+            <div class="text-3xl font-bold text-info">{{ stats['pending_count'] }}</div>
+            <div class="text-sm text-muted">theses being monitored</div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Breakdown -->
+<div class="grid grid-2 mb-6">
+    <div class="card">
+        <div class="card-header">
+            <h2>Outcome Distribution</h2>
+        </div>
+        <table>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-success">✅ Successful</span></td>
+                    <td class="text-right">{{ stats['success_count'] }}</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-danger">❌ Failed</span></td>
+                    <td class="text-right">{{ stats['failure_count'] }}</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-warning">⚠️ Mixed</span></td>
+                    <td class="text-right">{{ stats['mixed_count'] }}</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-info">🔄 Pending</span></td>
+                    <td class="text-right">{{ stats['pending_count'] }}</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-neutral">⏰ Expired</span></td>
+                    <td class="text-right">{{ stats['expired_count'] }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>Performance Metrics</h2>
+        </div>
+        <dl>
+            <dt>Total Theses Tracked</dt>
+            <dd>{{ stats['total_theses'] }}</dd>
+            <dt>Research Quality Score</dt>
+            <dd>
+                {% if stats['hit_rate_pct'] >= 70 %}
+                    <span class="badge badge-success">Excellent ({{ stats['hit_rate_pct'] }}%)</span>
+                {% elif stats['hit_rate_pct'] >= 50 %}
+                    <span class="badge badge-warning">Good ({{ stats['hit_rate_pct'] }}%)</span>
+                {% else %}
+                    <span class="badge badge-danger">Needs Improvement ({{ stats['hit_rate_pct'] }}%)</span>
+                {% endif %}
+            </dd>
+            <dt>Tracking Since</dt>
+            <dd>
+                {% if theses_data %}
+                    {{ theses_data[-1].thesis.created_date[:10] if theses_data[-1].thesis.created_date else "N/A" }}
+                {% else %}
+                    No data
+                {% endif %}
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<!-- Individual Thesis Performance -->
+{% if theses_data %}
+<div class="card">
+    <div class="card-header">
+        <div class="flex justify-between items-center">
+            <h2>Individual Thesis Performance</h2>
+            <div class="flex gap-2">
+                <select id="status-filter" onchange="filterTheses()" class="btn btn-sm">
+                    <option value="">All Status</option>
+                    <option value="success">Successful</option>
+                    <option value="failure">Failed</option>
+                    <option value="mixed">Mixed</option>
+                    <option value="pending">Pending</option>
+                    <option value="expired">Expired</option>
+                </select>
+                
+                <select id="sort-by" onchange="sortTheses()" class="btn btn-sm">
+                    <option value="date">Sort by Date</option>
+                    <option value="return">Sort by Return</option>
+                    <option value="ticker">Sort by Ticker</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Thesis</th>
+                    <th>Return</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Time Horizon</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="theses-table">
+                {% for data in theses_data %}
+                <tr class="thesis-row" 
+                    data-status="{{ data.performance.outcome }}"
+                    data-return="{{ data.performance.return_pct or 0 }}"
+                    data-ticker="{{ data.thesis.ticker }}"
+                    data-date="{{ data.thesis.created_date or '' }}">
+                    <td><strong>{{ data.thesis.ticker }}</strong></td>
+                    <td>
+                        <div>{{ data.thesis.thesis_statement[:60] }}{% if data.thesis.thesis_statement|length > 60 %}...{% endif %}</div>
+                        <small class="text-muted">{{ data.thesis.company_name }}</small>
+                    </td>
+                    <td>
+                        {% if data.performance.return_pct is not none %}
+                            <span class="{% if data.performance.return_pct > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ "+" if data.performance.return_pct > 0 else "" }}{{ "%.1f"|format(data.performance.return_pct) }}%
+                            </span>
+                            {% if data.performance.max_gain_pct and data.performance.max_drawdown_pct %}
+                                <br><small class="text-muted">
+                                    Peak: {{ "+%.1f"|format(data.performance.max_gain_pct) }}% | 
+                                    Trough: {{ "%.1f"|format(data.performance.max_drawdown_pct) }}%
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">No data</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if data.performance.outcome == "success" %}
+                            <span class="badge badge-success">✅ Success</span>
+                        {% elif data.performance.outcome == "failure" %}
+                            <span class="badge badge-danger">❌ Failed</span>
+                        {% elif data.performance.outcome == "mixed" %}
+                            <span class="badge badge-warning">⚠️ Mixed</span>
+                        {% elif data.performance.outcome == "pending" %}
+                            <span class="badge badge-info">🔄 Pending</span>
+                        {% elif data.performance.outcome == "expired" %}
+                            <span class="badge badge-neutral">⏰ Expired</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if data.thesis.created_date %}
+                            {{ data.thesis.created_date[:10] }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>{{ data.thesis.time_horizon_months }} months</td>
+                    <td>
+                        <div style="max-width: 200px; overflow: hidden;">
+                            {% if data.performance.outcome_notes %}
+                                {{ data.performance.outcome_notes[:50] }}{% if data.performance.outcome_notes|length > 50 %}...{% endif %}
+                            {% else %}
+                                <span class="text-muted">No notes</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="updateSingleThesis('{{ data.thesis.thesis_id }}')">
+                            Update
+                        </button>
+                        {% if data.thesis.research_file %}
+                            <a href="/research/{{ data.thesis.research_file }}" class="btn btn-sm btn-info" title="View original research">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">📊</div>
+        <h3>No Investment Theses Tracked Yet</h3>
+        <p>Generate research documents with investment recommendations to start tracking performance.</p>
+        <a href="/explore" class="btn btn-primary">Create Research</a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update all performance data
+async function updateAllPerformance() {
+    const btn = document.getElementById('update-btn');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Updating...';
+    
+    try {
+        const response = await fetch('/api/performance/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Performance data updated successfully!');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Failed to update performance data', 'error');
+        }
+    } catch (error) {
+        showToast('Error updating performance: ' + error.message, 'error');
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+}
+
+// Update single thesis performance
+async function updateSingleThesis(thesisId) {
+    try {
+        const response = await fetch('/api/performance/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({thesis_id: thesisId})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Thesis updated successfully!');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.message || 'Failed to update thesis', 'error');
+        }
+    } catch (error) {
+        showToast('Error: ' + error.message, 'error');
+    }
+}
+
+// Filter theses by status
+function filterTheses() {
+    const filter = document.getElementById('status-filter').value;
+    const rows = document.querySelectorAll('.thesis-row');
+    
+    rows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        const shouldShow = !filter || status === filter;
+        row.style.display = shouldShow ? '' : 'none';
+    });
+}
+
+// Sort theses
+function sortTheses() {
+    const sortBy = document.getElementById('sort-by').value;
+    const tbody = document.getElementById('theses-table');
+    const rows = Array.from(tbody.querySelectorAll('.thesis-row'));
+    
+    rows.sort((a, b) => {
+        let aVal, bVal;
+        
+        switch(sortBy) {
+            case 'return':
+                aVal = parseFloat(a.getAttribute('data-return')) || 0;
+                bVal = parseFloat(b.getAttribute('data-return')) || 0;
+                return bVal - aVal; // Descending
+                
+            case 'ticker':
+                aVal = a.getAttribute('data-ticker');
+                bVal = b.getAttribute('data-ticker');
+                return aVal.localeCompare(bVal);
+                
+            case 'date':
+            default:
+                aVal = a.getAttribute('data-date');
+                bVal = b.getAttribute('data-date');
+                return bVal.localeCompare(aVal); // Newest first
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Toast notification
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} fade-in`;
+    toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; min-width: 200px;';
+    
+    let icon;
+    switch(type) {
+        case 'error':
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+            break;
+        default:
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+    }
+    
+    toast.innerHTML = `
+        <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${icon}
+        </svg>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+</script>
+{% endblock %}

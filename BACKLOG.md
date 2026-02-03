@@ -166,11 +166,25 @@ Track how research predictions performed over time.
 - Track actual price performance
 - Calculate hit rate over time
 
-### 13. [feature] Source Citations
+### 13. [feature] Source Citations ✅
+**Impact**: High - transparency and credibility  
+**Effort**: Medium  
+**Status**: DONE (2026-02-03)
+
 Link back to original research sources:
-- Tavily search result URLs
-- Finnhub data attribution
-- "Sources" section at bottom of report
+- Tavily search result URLs ✅
+- Finnhub data attribution ✅
+- "Sources" section at bottom of report ✅
+
+**IMPLEMENTATION DETAILS**: Comprehensive source tracking and attribution system:
+- Created `SourceTracker` utility that tracks all data sources during research generation
+- Integrated with `ExploreAgent` to automatically track Tavily web searches and Finnhub market data
+- `ResearchSource` dataclass captures full metadata: URLs, titles, descriptions, access timestamps
+- Generates professional "Sources & Data Attribution" section in research documents
+- Groups sources by type: Web Research Sources (Tavily), Market Data Sources (Finnhub), AI Analysis
+- Includes search queries used, tickers analyzed, data provider attribution
+- Added to both main research and follow-up analysis workflows
+- Provides transparency and credibility to research output for analysts
 
 ### 14. [api] REST API Endpoints
 Programmatic access to research data:

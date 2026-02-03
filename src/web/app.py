@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
-from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator
+from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator, HistoricalTracker
 from src.utils.saved_research_store import SavedResearchStore
 from src.models import WatchlistEntity, SavedResearch, SavedResearchStatus
 
@@ -27,6 +27,7 @@ config_loader = ConfigLoader()
 research_comparator = ResearchComparator(data_dir=DATA_DIR)
 saved_research_store = SavedResearchStore(data_dir=DATA_DIR)
 excel_exporter = ExcelExporter(output_dir=DATA_DIR / 'exports')
+historical_tracker = HistoricalTracker(data_dir=DATA_DIR)
 
 
 @app.route('/')
@@ -697,6 +698,67 @@ def history_page():
     all_docs.sort(key=lambda x: x['name'], reverse=True)
 
     return render_template('history.html', documents=all_docs[:50])
+
+
+@app.route('/performance')
+def performance_page():
+    """Performance tracking page for investment theses."""
+    # Get performance statistics
+    stats = historical_tracker.get_hit_rate_stats()
+    
+    # Get all theses and performance data for display
+    theses_data = []
+    for thesis_id, thesis in historical_tracker.theses.items():
+        perf = historical_tracker.performance.get(thesis_id)
+        if perf:
+            theses_data.append({
+                'thesis': thesis.to_dict(),
+                'performance': perf.to_dict()
+            })
+    
+    # Sort by created date (newest first)
+    theses_data.sort(key=lambda x: x['thesis'].get('created_date', ''), reverse=True)
+    
+    return render_template('performance.html', 
+                         stats=stats, 
+                         theses_data=theses_data)
+
+
+@app.route('/api/performance/update', methods=['POST'])
+def api_update_performance():
+    """API endpoint to update thesis performance."""
+    try:
+        data = request.get_json() or {}
+        thesis_id = data.get('thesis_id')
+        
+        success = historical_tracker.update_performance(thesis_id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Performance updated successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to update performance - Finnhub data unavailable'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/performance/stats')
+def api_performance_stats():
+    """API endpoint to get performance statistics."""
+    try:
+        stats = historical_tracker.get_hit_rate_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 def run_server(host='127.0.0.1', port=5000, debug=False):

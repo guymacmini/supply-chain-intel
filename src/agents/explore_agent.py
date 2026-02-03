@@ -15,6 +15,7 @@ from ..utils.watchlist_manager import WatchlistManager
 from ..utils.finnhub_client import FinnhubClient
 from ..utils.tavily_client import TavilyClient
 from ..utils.source_tracker import SourceTracker
+from ..utils.historical_tracker import HistoricalTracker
 from ..analysis.shortage_analyzer import ShortageAnalyzer, analyze_bottlenecks
 from ..analysis.valuation_checker import ValuationChecker, check_valuations
 from ..analysis.demand_analyzer import DemandAnalyzer, analyze_demand
@@ -435,6 +436,10 @@ class ExploreAgent(BaseAgent):
         self.enable_cache = enable_cache
         self.source_tracker = SourceTracker()
         
+        # Initialize historical tracker
+        DATA_DIR = Path(__file__).parent.parent.parent / 'data'
+        self.historical_tracker = HistoricalTracker(DATA_DIR, self.finnhub_client)
+        
         # Ensure cache directory exists
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -652,6 +657,26 @@ Craft specific, targeted queries for best results.""",
         if sources_section:
             content += sources_section
 
+        # Extract and track investment theses for historical analysis
+        logger.info("Extracting investment theses for historical tracking...")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        research_filename = f"{query.lower().replace(' ', '_')}_{timestamp}.md"
+        extracted_theses = self.historical_tracker.extract_theses_from_research(content, research_filename)
+        
+        theses_added = 0
+        for thesis in extracted_theses:
+            if self.historical_tracker.add_thesis(thesis):
+                theses_added += 1
+        
+        if theses_added > 0:
+            logger.info(f"Added {theses_added} investment theses to historical tracking")
+        
+        # Add historical performance report
+        logger.info("Generating historical performance report...")
+        performance_section = self.historical_tracker.generate_performance_report()
+        if performance_section:
+            content += performance_section
+
         # Add research metadata section
         content += self._generate_research_metadata(query, depth, tool_results)
         
@@ -826,6 +851,16 @@ Use web search to gather current information relevant to the follow-up question.
         sources_section = self.source_tracker.generate_sources_section()
         if sources_section:
             content += sources_section
+
+        # Extract and track investment theses for historical analysis  
+        extracted_theses = self.historical_tracker.extract_theses_from_research(content, followup_theme + '.md')
+        for thesis in extracted_theses:
+            self.historical_tracker.add_thesis(thesis)
+        
+        # Add historical performance report
+        performance_section = self.historical_tracker.generate_performance_report()
+        if performance_section:
+            content += performance_section
 
         # Generate the research document
         metadata = {
