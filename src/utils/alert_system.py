@@ -20,6 +20,9 @@ except ImportError:
     from email import encoders
 import threading
 import time as time_module
+
+# Import enhanced webhook integrations
+from .webhook_integrations import WebhookIntegrations, WebhookMessage, WebhookPlatform
 from enum import Enum
 
 from .finnhub_client import FinnhubClient
@@ -133,6 +136,7 @@ class AlertNotificationEngine:
             email_config: Email configuration for email alerts
         """
         self.email_config = email_config
+        self.webhook_integrations = WebhookIntegrations()
     
     def send_email_alert(self, alert_rule: AlertRule, alert_event: AlertEvent, 
                         custom_message: str = None) -> bool:
@@ -187,7 +191,7 @@ class AlertNotificationEngine:
             return False
     
     def send_webhook_alert(self, alert_rule: AlertRule, alert_event: AlertEvent) -> bool:
-        """Send alert via webhook.
+        """Send alert via enhanced webhook integrations.
         
         Args:
             alert_rule: The alert rule that triggered
@@ -200,7 +204,42 @@ class AlertNotificationEngine:
             return False
         
         try:
-            # Prepare webhook payload
+            # Use enhanced webhook integrations for better formatting
+            if alert_rule.alert_type == AlertType.PRICE and alert_event.ticker:
+                # Price alert - use specialized price alert method
+                return self.webhook_integrations.send_price_alert(
+                    webhook_url=alert_rule.webhook_url,
+                    ticker=alert_event.ticker,
+                    current_price=alert_event.current_value,
+                    alert_price=alert_event.threshold_value,
+                    change_percent=((alert_event.current_value - alert_event.threshold_value) / alert_event.threshold_value) * 100
+                )
+            else:
+                # Generic alert - use structured message
+                message = WebhookMessage(
+                    title=f"🚨 Alert: {alert_rule.name}",
+                    content=alert_event.trigger_reason,
+                    platform=WebhookPlatform.GENERIC,
+                    color=self.webhook_integrations.COLORS['alert'],
+                    fields=[
+                        {"name": "Type", "value": alert_rule.alert_type.value.title(), "inline": True},
+                        {"name": "Trigger", "value": alert_rule.trigger.value.title(), "inline": True},
+                        {"name": "Current Value", "value": str(alert_event.current_value), "inline": True},
+                        {"name": "Threshold", "value": str(alert_event.threshold_value), "inline": True}
+                    ] + ([{"name": "Ticker", "value": alert_event.ticker, "inline": True}] if alert_event.ticker else []),
+                    footer="Supply Chain Intel Alerts"
+                )
+                
+                return self.webhook_integrations.send_message(alert_rule.webhook_url, message)
+            
+        except Exception as e:
+            print(f"Failed to send enhanced webhook alert: {e}")
+            # Fallback to basic webhook
+            return self._send_basic_webhook_alert(alert_rule, alert_event)
+    
+    def _send_basic_webhook_alert(self, alert_rule: AlertRule, alert_event: AlertEvent) -> bool:
+        """Fallback basic webhook alert method."""
+        try:
             payload = {
                 'alert_rule': {
                     'id': alert_rule.id,
@@ -224,7 +263,7 @@ class AlertNotificationEngine:
             return response.status_code == 200
             
         except Exception as e:
-            print(f"Failed to send webhook alert: {e}")
+            print(f"Failed to send basic webhook alert: {e}")
             return False
     
     def _generate_alert_email_body(self, alert_rule: AlertRule, alert_event: AlertEvent) -> str:

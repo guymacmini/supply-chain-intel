@@ -22,5 +22,25 @@
     ],
     "tldr": "Quantum computing represents one of the most transformative technological shifts of the 21st century, leveraging quantum mechanical phenomena like superposition and entanglement to solve problems intr...",
     "last_updated": null
+  },
+  {
+    "filename": "test_research.md",
+    "title": "test research",
+    "status": "interested",
+    "saved_date": "2026-02-03 13:04:18",
+    "notes": "Promising long-term opportunity",
+    "tags": [
+      "technology,growth"
+    ],
+    "rating": 4,
+    "sector": "** Technology",
+    "tickers": [
+      "TLDR",
+      "TSLA",
+      "NVDA",
+      "AI"
+    ],
+    "tldr": "This is a test research report for integration testing.\n\n**Tickers:** TSLA, NVDA  \n**Sector:** Technology  \n**Theme:** AI and Electric Vehicles...",
+    "last_updated": null
   }
 ]

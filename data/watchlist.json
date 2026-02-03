@@ -478,16 +478,6 @@
       "source_research": "quantum_computing_20260202.md"
     },
     {
-      "ticker": "AAPL",
-      "name": "Apple Inc.",
-      "themes": [
-        "Consumer Electronics",
-        "Tech"
-      ],
-      "added_date": "2026-02-02",
-      "source_research": null
-    },
-    {
       "ticker": "TER",
       "name": "TER",
       "themes": [
@@ -621,7 +611,14 @@
       ],
       "added_date": "2026-02-03",
       "source_research": "quantum_computing_20260203.md"
+    },
+    {
+      "ticker": "TEST",
+      "name": "TEST",
+      "themes": [],
+      "added_date": "2026-02-03",
+      "source_research": null
     }
   ],
-  "last_updated": "2026-02-03T12:09:41.151648"
+  "last_updated": "2026-02-03T13:07:28.696362"
 }
