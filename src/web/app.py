@@ -71,6 +71,12 @@ def explore_page():
     return render_template('explore.html', research_files=research_files)
 
 
+@app.route('/alerts')
+def alerts_page():
+    """Alert system management page."""
+    return render_template('alerts.html')
+
+
 @app.route('/api/explore', methods=['POST'])
 def api_explore():
     """API endpoint to run exploration."""

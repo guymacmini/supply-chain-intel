@@ -555,4 +555,278 @@ def create_api_blueprint(data_dir: Path, api_key_manager) -> Blueprint:
         
         return sections
     
+    # ============================================================================
+    # ALERT SYSTEM ENDPOINTS  
+    # ============================================================================
+    
+    # Import here to avoid circular imports
+    from ..utils.alert_system import AlertManager, AlertType, AlertTrigger
+    alert_manager = AlertManager(data_dir)
+    
+    @api.route('/alerts/rules', methods=['GET'])
+    @auth_required
+    def list_alert_rules():
+        """List all alert rules."""
+        try:
+            enabled_only = request.args.get('enabled_only', 'true').lower() == 'true'
+            rules = alert_manager.get_alert_rules(enabled_only=enabled_only)
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'rules': [rule.to_dict() for rule in rules],
+                    'total': len(rules)
+                }
+            })
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/rules', methods=['POST'])
+    @auth_required  
+    def create_alert_rule():
+        """Create a new alert rule."""
+        try:
+            data = request.get_json()
+            
+            # Validate required fields
+            required_fields = ['name', 'alert_type', 'trigger', 'condition_value']
+            for field in required_fields:
+                if field not in data:
+                    return jsonify({
+                        'status': 'error', 
+                        'error': f'Missing required field: {field}'
+                    }), 400
+            
+            # Convert string enums to enum objects
+            alert_type = AlertType(data['alert_type'])
+            trigger = AlertTrigger(data['trigger'])
+            
+            rule = alert_manager.create_alert_rule(
+                name=data['name'],
+                alert_type=alert_type,
+                trigger=trigger,
+                condition_value=float(data['condition_value']),
+                ticker=data.get('ticker'),
+                theme=data.get('theme'),
+                email_recipients=data.get('email_recipients', []),
+                webhook_url=data.get('webhook_url')
+            )
+            
+            return jsonify({
+                'status': 'success',
+                'data': {'rule': rule.to_dict()}
+            }), 201
+            
+        except ValueError as e:
+            return jsonify({'status': 'error', 'error': f'Invalid value: {str(e)}'}), 400
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/rules/<rule_id>', methods=['PUT'])
+    @auth_required
+    def update_alert_rule(rule_id: str):
+        """Update an existing alert rule.""" 
+        try:
+            data = request.get_json()
+            
+            # Convert enum fields if provided
+            if 'alert_type' in data:
+                data['alert_type'] = AlertType(data['alert_type'])
+            if 'trigger' in data:
+                data['trigger'] = AlertTrigger(data['trigger'])
+            
+            success = alert_manager.update_alert_rule(rule_id, **data)
+            
+            if success:
+                updated_rule = alert_manager.alert_rules.get(rule_id)
+                return jsonify({
+                    'status': 'success',
+                    'data': {'rule': updated_rule.to_dict()}
+                })
+            else:
+                return jsonify({'status': 'error', 'error': 'Rule not found'}), 404
+                
+        except ValueError as e:
+            return jsonify({'status': 'error', 'error': f'Invalid value: {str(e)}'}), 400
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/rules/<rule_id>', methods=['DELETE'])
+    @auth_required
+    def delete_alert_rule(rule_id: str):
+        """Delete an alert rule."""
+        try:
+            success = alert_manager.delete_alert_rule(rule_id)
+            
+            if success:
+                return jsonify({'status': 'success'})
+            else:
+                return jsonify({'status': 'error', 'error': 'Rule not found'}), 404
+                
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/rules/<rule_id>/events', methods=['GET'])
+    @auth_required
+    def get_alert_events(rule_id: str):
+        """Get events for a specific alert rule."""
+        try:
+            limit = int(request.args.get('limit', 50))
+            events = alert_manager.get_alert_events(rule_id=rule_id, limit=limit)
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'events': [event.to_dict() for event in events],
+                    'total': len(events)
+                }
+            })
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/events', methods=['GET'])
+    @auth_required
+    def list_alert_events():
+        """List all recent alert events."""
+        try:
+            limit = int(request.args.get('limit', 100))
+            events = alert_manager.get_alert_events(limit=limit)
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'events': [event.to_dict() for event in events],
+                    'total': len(events)
+                }
+            })
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/check', methods=['POST'])
+    @auth_required
+    def check_alerts():
+        """Manually trigger alert checks."""
+        try:
+            triggered_events = alert_manager.check_all_alerts()
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'triggered_events': [event.to_dict() for event in triggered_events],
+                    'count': len(triggered_events)
+                }
+            })
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/stats', methods=['GET'])
+    @auth_required
+    def get_alert_statistics():
+        """Get alert system statistics."""
+        try:
+            stats = alert_manager.get_alert_statistics()
+            
+            return jsonify({
+                'status': 'success',
+                'data': stats
+            })
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/config/email', methods=['POST'])
+    @auth_required
+    def configure_alert_email():
+        """Configure email settings for alerts."""
+        try:
+            data = request.get_json()
+            
+            required_fields = ['smtp_server', 'smtp_port', 'username', 'password']
+            for field in required_fields:
+                if field not in data:
+                    return jsonify({
+                        'status': 'error',
+                        'error': f'Missing required field: {field}'
+                    }), 400
+            
+            success = alert_manager.configure_email(
+                smtp_server=data['smtp_server'],
+                smtp_port=int(data['smtp_port']),
+                username=data['username'],
+                password=data['password'],
+                use_tls=data.get('use_tls', True)
+            )
+            
+            if success:
+                return jsonify({'status': 'success'})
+            else:
+                return jsonify({'status': 'error', 'error': 'Configuration failed'}), 500
+                
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    # Convenience endpoints for common alert types
+    @api.route('/alerts/price-alert', methods=['POST'])
+    @auth_required
+    def create_price_alert():
+        """Create a price alert (convenience endpoint)."""
+        try:
+            data = request.get_json()
+            
+            required_fields = ['ticker', 'trigger', 'price']
+            for field in required_fields:
+                if field not in data:
+                    return jsonify({
+                        'status': 'error',
+                        'error': f'Missing required field: {field}'
+                    }), 400
+            
+            trigger = AlertTrigger(data['trigger'])
+            rule = alert_manager.create_price_alert(
+                ticker=data['ticker'],
+                trigger=trigger,
+                price=float(data['price']),
+                emails=data.get('emails', [])
+            )
+            
+            return jsonify({
+                'status': 'success',
+                'data': {'rule': rule.to_dict()}
+            }), 201
+            
+        except ValueError as e:
+            return jsonify({'status': 'error', 'error': f'Invalid value: {str(e)}'}), 400
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
+    @api.route('/alerts/daily-digest', methods=['POST'])
+    @auth_required
+    def create_daily_digest():
+        """Create a daily digest alert (convenience endpoint)."""
+        try:
+            data = request.get_json()
+            
+            if 'emails' not in data:
+                return jsonify({
+                    'status': 'error',
+                    'error': 'Missing required field: emails'
+                }), 400
+            
+            rule = alert_manager.create_daily_digest(
+                emails=data['emails'],
+                delivery_time=data.get('delivery_time', '09:00')
+            )
+            
+            return jsonify({
+                'status': 'success',
+                'data': {'rule': rule.to_dict()}
+            }), 201
+            
+        except Exception as e:
+            return jsonify({'status': 'error', 'error': str(e)}), 500
+    
     return api
