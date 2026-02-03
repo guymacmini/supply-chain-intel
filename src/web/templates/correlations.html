@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Multi-Theme Correlations - Supply Chain Intel{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-4">
+    <h1>Multi-Theme Correlation Analysis</h1>
+    <button class="btn btn-primary btn-sm" onclick="refreshCorrelations()" id="refresh-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Refresh Analysis
+    </button>
+</div>
+
+<!-- Theme Selection -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h2>Available Themes</h2>
+        <span class="badge badge-info">{{ themes|length }} themes analyzed</span>
+    </div>
+    
+    {% if themes %}
+    <div class="flex flex-wrap gap-2 mb-4">
+        {% for theme in themes %}
+        <span class="badge badge-outline cursor-pointer" onclick="toggleTheme('{{ theme }}')" id="theme-{{ theme|replace(' ', '-') }}">
+            {{ theme }}
+        </span>
+        {% endfor %}
+    </div>
+    
+    <div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="selectAllThemes()">Select All</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearAllThemes()">Clear All</button>
+        <button class="btn btn-primary btn-sm" onclick="analyzeSelectedThemes()">Analyze Selected</button>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <p>No research themes found. Generate some research documents first.</p>
+        <a href="/explore" class="btn btn-primary">Create Research</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if overlaps or opportunities %}
+<!-- Theme Overlaps -->
+{% if overlaps %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2>Theme Correlations</h2>
+        <span class="badge badge-info">{{ overlaps|length }} correlations found</span>
+    </div>
+    
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Theme 1</th>
+                    <th>Theme 2</th>
+                    <th>Overlap Score</th>
+                    <th>Correlation Type</th>
+                    <th>Common Tickers</th>
+                    <th>Key Insights</th>
+                </tr>
+            </thead>
+            <tbody id="overlaps-table">
+                {% for overlap in overlaps %}
+                <tr>
+                    <td><strong>{{ overlap.theme1 }}</strong></td>
+                    <td><strong>{{ overlap.theme2 }}</strong></td>
+                    <td>
+                        <div class="flex items-center">
+                            <div class="progress-bar" style="width: 60px; margin-right: 8px;">
+                                <div class="progress-fill" style="width: {{ (overlap.overlap_score * 100)|round }}%"></div>
+                            </div>
+                            {{ (overlap.overlap_score * 100)|round }}%
+                        </div>
+                    </td>
+                    <td>
+                        {% if overlap.correlation_type == "complementary" %}
+                            <span class="badge badge-success">🤝 Complementary</span>
+                        {% elif overlap.correlation_type == "conflicting" %}
+                            <span class="badge badge-warning">⚡ Conflicting</span>
+                        {% else %}
+                            <span class="badge badge-neutral">➖ Independent</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="flex flex-wrap gap-1">
+                            {% for ticker in overlap.common_tickers[:5] %}
+                                <span class="badge badge-outline">{{ ticker }}</span>
+                            {% endfor %}
+                            {% if overlap.common_tickers|length > 5 %}
+                                <span class="text-small text-muted">+{{ overlap.common_tickers|length - 5 }} more</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% for insight in overlap.insights[:2] %}
+                            <div class="text-small mb-1">• {{ insight }}</div>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Cross-Theme Opportunities -->
+{% if opportunities %}
+<div class="card">
+    <div class="card-header">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2>Cross-Theme Investment Opportunities</h2>
+                <span class="badge badge-info">{{ opportunities|length }} opportunities identified</span>
+            </div>
+            <div class="flex gap-2">
+                <select id="opp-filter" onchange="filterOpportunities()" class="btn btn-sm">
+                    <option value="">All Types</option>
+                    <option value="multi_theme_winner">Multi-Theme Winners</option>
+                    <option value="theme_conflict">Theme Conflicts</option>
+                    <option value="diversified_play">Diversified Plays</option>
+                </select>
+                
+                <select id="opp-sort" onchange="sortOpportunities()" class="btn btn-sm">
+                    <option value="confidence">Sort by Confidence</option>
+                    <option value="themes">Sort by Theme Count</option>
+                    <option value="ticker">Sort by Ticker</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Company</th>
+                    <th>Themes</th>
+                    <th>Opportunity Type</th>
+                    <th>Confidence</th>
+                    <th>Description</th>
+                    <th>Risk Factors</th>
+                </tr>
+            </thead>
+            <tbody id="opportunities-table">
+                {% for opp in opportunities %}
+                <tr class="opportunity-row" 
+                    data-type="{{ opp.opportunity_type }}"
+                    data-confidence="{{ opp.confidence_score }}"
+                    data-themes="{{ opp.themes|length }}"
+                    data-ticker="{{ opp.ticker }}">
+                    <td><strong>{{ opp.ticker }}</strong></td>
+                    <td>{{ opp.company_name[:30] }}{% if opp.company_name|length > 30 %}...{% endif %}</td>
+                    <td>
+                        <div class="flex flex-wrap gap-1" style="max-width: 150px;">
+                            {% for theme in opp.themes[:3] %}
+                                <span class="badge badge-outline text-small">{{ theme[:10] }}{% if theme|length > 10 %}...{% endif %}</span>
+                            {% endfor %}
+                            {% if opp.themes|length > 3 %}
+                                <span class="text-small text-muted">+{{ opp.themes|length - 3 }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if opp.opportunity_type == "multi_theme_winner" %}
+                            <span class="badge badge-success">🚀 Multi-Winner</span>
+                        {% elif opp.opportunity_type == "theme_conflict" %}
+                            <span class="badge badge-warning">⚡ Conflict</span>
+                        {% elif opp.opportunity_type == "diversified_play" %}
+                            <span class="badge badge-info">🎯 Diversified</span>
+                        {% elif opp.opportunity_type == "multi_theme_loser" %}
+                            <span class="badge badge-danger">⚠️ Multi-Loser</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="flex items-center">
+                            <div class="progress-bar" style="width: 40px; margin-right: 8px;">
+                                <div class="progress-fill" style="width: {{ (opp.confidence_score * 100)|round }}%"></div>
+                            </div>
+                            {{ (opp.confidence_score * 100)|round }}%
+                        </div>
+                    </td>
+                    <td style="max-width: 250px;">
+                        <div class="text-small">{{ opp.description[:120] }}{% if opp.description|length > 120 %}...{% endif %}</div>
+                        {% if opp.supporting_themes %}
+                            <div class="text-small text-success mt-1">
+                                <strong>Supporting:</strong> {{ opp.supporting_themes|join(', ') }}
+                            </div>
+                        {% endif %}
+                        {% if opp.conflicting_themes %}
+                            <div class="text-small text-danger mt-1">
+                                <strong>Conflicting:</strong> {{ opp.conflicting_themes|join(', ') }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td style="max-width: 200px;">
+                        {% for risk in opp.risk_factors[:2] %}
+                            <div class="text-small mb-1">• {{ risk[:60] }}{% if risk|length > 60 %}...{% endif %}</div>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+
+<style>
+.progress-bar {
+    height: 8px;
+    background-color: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.badge.badge-outline {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.badge.badge-outline:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.badge.badge-outline.selected {
+    background-color: var(--primary);
+    color: white;
+}
+
+.theme-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedThemes = new Set();
+
+// Theme selection functions
+function toggleTheme(theme) {
+    const element = document.getElementById(`theme-${theme.replace(/\s+/g, '-')}`);
+    if (selectedThemes.has(theme)) {
+        selectedThemes.delete(theme);
+        element.classList.remove('selected');
+    } else {
+        selectedThemes.add(theme);
+        element.classList.add('selected');
+    }
+}
+
+function selectAllThemes() {
+    const themes = {{ themes | tojson | safe }};
+    selectedThemes = new Set(themes);
+    themes.forEach(theme => {
+        document.getElementById(`theme-${theme.replace(/\s+/g, '-')}`).classList.add('selected');
+    });
+}
+
+function clearAllThemes() {
+    selectedThemes.clear();
+    const themes = {{ themes | tojson | safe }};
+    themes.forEach(theme => {
+        document.getElementById(`theme-${theme.replace(/\s+/g, '-')}`).classList.remove('selected');
+    });
+}
+
+// Analysis functions
+async function analyzeSelectedThemes() {
+    const themes = Array.from(selectedThemes);
+    
+    if (themes.length < 2) {
+        showToast('Please select at least 2 themes to analyze', 'warning');
+        return;
+    }
+    
+    showToast('Analyzing correlations for selected themes...');
+    
+    try {
+        const response = await fetch('/api/correlations/analyze', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({themes: themes})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            updateCorrelationTables(data.overlaps, data.opportunities);
+            showToast(`Analysis complete! Found ${data.overlaps.length} correlations and ${data.opportunities.length} opportunities`);
+        } else {
+            showToast('Analysis failed: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Error during analysis: ' + error.message, 'error');
+    }
+}
+
+async function refreshCorrelations() {
+    const btn = document.getElementById('refresh-btn');
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Refreshing...';
+    
+    try {
+        const response = await fetch('/api/correlations/analyze', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            updateCorrelationTables(data.overlaps, data.opportunities);
+            showToast('Correlation analysis refreshed!');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Failed to refresh: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Error refreshing: ' + error.message, 'error');
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+}
+
+// Table management functions
+function updateCorrelationTables(overlaps, opportunities) {
+    // Update overlaps table
+    const overlapsTable = document.getElementById('overlaps-table');
+    if (overlapsTable) {
+        // Implementation would update the table with new data
+        // For simplicity, we'll just reload the page
+    }
+    
+    // Update opportunities table  
+    const opportunitiesTable = document.getElementById('opportunities-table');
+    if (opportunitiesTable) {
+        // Implementation would update the table with new data
+        // For simplicity, we'll just reload the page
+    }
+}
+
+// Filter and sort functions
+function filterOpportunities() {
+    const filter = document.getElementById('opp-filter').value;
+    const rows = document.querySelectorAll('.opportunity-row');
+    
+    rows.forEach(row => {
+        const type = row.getAttribute('data-type');
+        const shouldShow = !filter || type === filter;
+        row.style.display = shouldShow ? '' : 'none';
+    });
+}
+
+function sortOpportunities() {
+    const sortBy = document.getElementById('opp-sort').value;
+    const tbody = document.getElementById('opportunities-table');
+    const rows = Array.from(tbody.querySelectorAll('.opportunity-row'));
+    
+    rows.sort((a, b) => {
+        let aVal, bVal;
+        
+        switch(sortBy) {
+            case 'confidence':
+                aVal = parseFloat(a.getAttribute('data-confidence')) || 0;
+                bVal = parseFloat(b.getAttribute('data-confidence')) || 0;
+                return bVal - aVal; // Descending
+                
+            case 'themes':
+                aVal = parseInt(a.getAttribute('data-themes')) || 0;
+                bVal = parseInt(b.getAttribute('data-themes')) || 0;
+                return bVal - aVal; // Descending
+                
+            case 'ticker':
+            default:
+                aVal = a.getAttribute('data-ticker');
+                bVal = b.getAttribute('data-ticker');
+                return aVal.localeCompare(bVal);
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+// Toast notification
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} fade-in`;
+    toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; min-width: 200px;';
+    
+    let icon;
+    switch(type) {
+        case 'error':
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+            break;
+        case 'warning':
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>';
+            break;
+        default:
+            icon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+    }
+    
+    toast.innerHTML = `
+        <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${icon}
+        </svg>
+        ${message}
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+</script>
+{% endblock %}

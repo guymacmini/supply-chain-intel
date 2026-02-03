@@ -9,5 +9,6 @@ from .research_comparator import ResearchComparator
 from .saved_research_store import SavedResearchStore
 from .source_tracker import SourceTracker, ResearchSource
 from .historical_tracker import HistoricalTracker, InvestmentThesis, ThesisPerformance
+from .correlation_analyzer import MultiThemeCorrelationAnalyzer, ThemeOverlap, CrossThemeOpportunity
 
-__all__ = ["ConfigLoader", "MarkdownGenerator", "WatchlistManager", "PDFExporter", "ExcelExporter", "ResearchComparator", "SavedResearchStore", "SourceTracker", "ResearchSource", "HistoricalTracker", "InvestmentThesis", "ThesisPerformance"]
+__all__ = ["ConfigLoader", "MarkdownGenerator", "WatchlistManager", "PDFExporter", "ExcelExporter", "ResearchComparator", "SavedResearchStore", "SourceTracker", "ResearchSource", "HistoricalTracker", "InvestmentThesis", "ThesisPerformance", "MultiThemeCorrelationAnalyzer", "ThemeOverlap", "CrossThemeOpportunity"]

@@ -16,6 +16,7 @@ from ..utils.finnhub_client import FinnhubClient
 from ..utils.tavily_client import TavilyClient
 from ..utils.source_tracker import SourceTracker
 from ..utils.historical_tracker import HistoricalTracker
+from ..utils.correlation_analyzer import MultiThemeCorrelationAnalyzer
 from ..analysis.shortage_analyzer import ShortageAnalyzer, analyze_bottlenecks
 from ..analysis.valuation_checker import ValuationChecker, check_valuations
 from ..analysis.demand_analyzer import DemandAnalyzer, analyze_demand
@@ -436,9 +437,10 @@ class ExploreAgent(BaseAgent):
         self.enable_cache = enable_cache
         self.source_tracker = SourceTracker()
         
-        # Initialize historical tracker
+        # Initialize historical tracker and correlation analyzer
         DATA_DIR = Path(__file__).parent.parent.parent / 'data'
         self.historical_tracker = HistoricalTracker(DATA_DIR, self.finnhub_client)
+        self.correlation_analyzer = MultiThemeCorrelationAnalyzer(DATA_DIR)
         
         # Ensure cache directory exists
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -671,6 +673,15 @@ Craft specific, targeted queries for best results.""",
         if theses_added > 0:
             logger.info(f"Added {theses_added} investment theses to historical tracking")
         
+        # Add multi-theme correlation analysis
+        logger.info("Generating multi-theme correlation analysis...")
+        try:
+            correlation_section = self.correlation_analyzer.generate_correlation_report()
+            if correlation_section:
+                content += correlation_section
+        except Exception as e:
+            logger.warning(f"Correlation analysis failed: {e}")
+        
         # Add historical performance report
         logger.info("Generating historical performance report...")
         performance_section = self.historical_tracker.generate_performance_report()
@@ -856,6 +867,14 @@ Use web search to gather current information relevant to the follow-up question.
         extracted_theses = self.historical_tracker.extract_theses_from_research(content, followup_theme + '.md')
         for thesis in extracted_theses:
             self.historical_tracker.add_thesis(thesis)
+        
+        # Add multi-theme correlation analysis
+        try:
+            correlation_section = self.correlation_analyzer.generate_correlation_report()
+            if correlation_section:
+                content += correlation_section
+        except Exception as e:
+            logger.warning(f"Correlation analysis failed: {e}")
         
         # Add historical performance report
         performance_section = self.historical_tracker.generate_performance_report()

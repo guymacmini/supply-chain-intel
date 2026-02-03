@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.agents import ExploreAgent, HypothesisAgent, MonitorAgent
-from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator, HistoricalTracker
+from src.utils import WatchlistManager, MarkdownGenerator, ConfigLoader, PDFExporter, ExcelExporter, ResearchComparator, HistoricalTracker, MultiThemeCorrelationAnalyzer
 from src.utils.saved_research_store import SavedResearchStore
 from src.models import WatchlistEntity, SavedResearch, SavedResearchStatus
 
@@ -28,6 +28,7 @@ research_comparator = ResearchComparator(data_dir=DATA_DIR)
 saved_research_store = SavedResearchStore(data_dir=DATA_DIR)
 excel_exporter = ExcelExporter(output_dir=DATA_DIR / 'exports')
 historical_tracker = HistoricalTracker(data_dir=DATA_DIR)
+correlation_analyzer = MultiThemeCorrelationAnalyzer(data_dir=DATA_DIR)
 
 
 @app.route('/')
@@ -759,6 +760,57 @@ def api_performance_stats():
         return jsonify(stats)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/correlations')
+def correlations_page():
+    """Multi-theme correlation analysis page."""
+    try:
+        # Get theme correlations
+        overlaps = correlation_analyzer.analyze_theme_correlations()
+        
+        # Get cross-theme opportunities
+        opportunities = correlation_analyzer.identify_cross_theme_opportunities()
+        
+        # Get available themes
+        themes = correlation_analyzer._get_available_themes()
+        
+        return render_template('correlations.html',
+                             overlaps=overlaps,
+                             opportunities=opportunities,
+                             themes=themes)
+    except Exception as e:
+        app.logger.error(f"Correlations page error: {str(e)}")
+        return render_template('correlations.html',
+                             overlaps=[],
+                             opportunities=[],
+                             themes=[])
+
+
+@app.route('/api/correlations/analyze', methods=['POST'])
+def api_analyze_correlations():
+    """API endpoint to run correlation analysis."""
+    try:
+        data = request.get_json() or {}
+        selected_themes = data.get('themes', [])
+        
+        if selected_themes:
+            overlaps = correlation_analyzer.analyze_theme_correlations(selected_themes)
+        else:
+            overlaps = correlation_analyzer.analyze_theme_correlations()
+        
+        opportunities = correlation_analyzer.identify_cross_theme_opportunities()
+        
+        return jsonify({
+            'success': True,
+            'overlaps': [o.to_dict() for o in overlaps],
+            'opportunities': [o.to_dict() for o in opportunities[:20]]  # Limit to top 20
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 def run_server(host='127.0.0.1', port=5000, debug=False):

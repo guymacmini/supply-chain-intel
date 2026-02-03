@@ -781,6 +781,7 @@
                 <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Dashboard</a></li>
                 <li><a href="/explore" {% if '/explore' in request.path or '/research' in request.path %}class="active"{% endif %}>Explore</a></li>
                 <li><a href="/compare" {% if '/compare' in request.path %}class="active"{% endif %}>Compare</a></li>
+                <li><a href="/correlations" {% if '/correlations' in request.path %}class="active"{% endif %}>Correlations</a></li>
                 <li><a href="/thesis" {% if '/thesis' in request.path %}class="active"{% endif %}>Thesis</a></li>
                 <li><a href="/monitor" {% if '/monitor' in request.path or '/digest' in request.path %}class="active"{% endif %}>Monitor</a></li>
                 <li><a href="/watchlist" {% if '/watchlist' in request.path %}class="active"{% endif %}>Watchlist</a></li>

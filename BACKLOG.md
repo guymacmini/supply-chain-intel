@@ -160,11 +160,27 @@ Move beyond markdown to interactive charts (Chart.js or Plotly).
 ### 11. [agents] Multi-theme Correlation
 Identify cross-theme opportunities and conflicts.
 
-### 12. [data] Historical Analysis Tracking
+### 12. [data] Historical Analysis Tracking ✅
+**Impact**: High - measure research accuracy over time  
+**Effort**: High  
+**Status**: DONE (2026-02-03)
+
 Track how research predictions performed over time.
-- Record thesis at time of analysis
-- Track actual price performance
-- Calculate hit rate over time
+- Record thesis at time of analysis ✅
+- Track actual price performance ✅
+- Calculate hit rate over time ✅
+
+**IMPLEMENTATION DETAILS**: Comprehensive historical tracking and performance measurement system:
+- Created `HistoricalTracker` utility with `InvestmentThesis` and `ThesisPerformance` models
+- Automatic thesis extraction from research documents using pattern matching
+- Price performance tracking with Finnhub integration (initial, current, peak, trough prices)
+- Performance metrics calculation: returns, max drawdown, max gain, outcome evaluation
+- Hit rate statistics with success/failure/mixed/pending/expired classifications
+- Web interface at `/performance` with detailed thesis tracking and filtering
+- API endpoints for performance updates and statistics
+- Integrated with ExploreAgent for automatic thesis tracking from new research
+- Supports multiple prediction types: outperform, underperform, stable, volatile
+- Time horizon tracking with automatic outcome evaluation at expiry
 
 ### 13. [feature] Source Citations ✅
 **Impact**: High - transparency and credibility  
