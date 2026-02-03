@@ -321,8 +321,16 @@ class ExcelExporter:
         
         output_path = self.output_dir / output_filename
         
+        # Convert list fields to strings for Excel compatibility
+        cleaned_data = []
+        for item in watchlist_data:
+            cleaned_item = item.copy()
+            if 'themes' in cleaned_item and isinstance(cleaned_item['themes'], list):
+                cleaned_item['themes'] = ', '.join(cleaned_item['themes'])
+            cleaned_data.append(cleaned_item)
+        
         # Create DataFrame
-        df = pd.DataFrame(watchlist_data)
+        df = pd.DataFrame(cleaned_data)
         
         # Create workbook and write data
         wb = openpyxl.Workbook()
@@ -370,8 +378,18 @@ class ExcelExporter:
         
         output_path = self.output_dir / output_filename
         
+        # Convert list fields to strings for Excel compatibility
+        cleaned_data = []
+        for item in saved_research_data:
+            cleaned_item = item.copy()
+            if 'tags' in cleaned_item and isinstance(cleaned_item['tags'], list):
+                cleaned_item['tags'] = ', '.join(cleaned_item['tags'])
+            if 'tickers' in cleaned_item and isinstance(cleaned_item['tickers'], list):
+                cleaned_item['tickers'] = ', '.join(cleaned_item['tickers'])
+            cleaned_data.append(cleaned_item)
+        
         # Create DataFrame
-        df = pd.DataFrame(saved_research_data)
+        df = pd.DataFrame(cleaned_data)
         
         # Create workbook and write data
         wb = openpyxl.Workbook()
