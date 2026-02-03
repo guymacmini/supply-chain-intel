@@ -109,14 +109,23 @@ Add ability to compare 2-3 research reports:
 - Responsive modal interface for editing saved items
 - All functionality tested on Flask server (port 5001) with successful CRUD operations
 
-### 6. [export] Excel/CSV Export
+### 6. [export] Excel/CSV Export ✅
 **Impact**: Medium - analysts want spreadsheet data  
 **Effort**: Low  
-**Status**: TODO
+**Status**: DONE (2026-02-03)
 
-- Export ticker data to Excel/CSV
-- Include valuation metrics, ratings, analysis
-- Clean tabular format for further analysis
+- Export ticker data to Excel/CSV ✅
+- Include valuation metrics, ratings, analysis ✅
+- Clean tabular format for further analysis ✅
+
+**IMPLEMENTATION DETAILS**: Complete Excel/CSV export system:
+- Created comprehensive `ExcelExporter` utility with markdown table parsing
+- Individual research document export to Excel/CSV with structured company data extraction
+- Bulk export functionality for watchlist and saved research data
+- Web UI integration with export buttons on research, watchlist, and saved research pages  
+- Handles list fields properly (themes, tags, tickers) by converting to comma-separated strings
+- Export routes: `/export/<filename>/{excel,csv}`, `/export/{watchlist,saved-research}/excel`
+- All functionality tested and working with real data
 
 ### 7. [ui] Mobile-Responsive Design
 **Impact**: Medium - access research on-the-go  

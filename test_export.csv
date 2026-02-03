@@ -1,0 +1,42 @@
+company_name,entry,entry_trigger,exposure_score,market_cap,priority,rank,risk,role,source,stop,target,theme,thesis,ticker,why_they_win
+Air Products,,,4/10,Mega ($65B),,,,Helium supplier for cryogenic cooling,,,,,,APD,
+Linde plc,,,4/10,Mega ($200B),,,,"Industrial gases, helium-3 supplier",,,,,,LIN,
+MP Materials,,,5/10,Mid ($4B),,,,Rare earth elements for quantum hardware,,,,,,MP,
+Entegris,,,6/10,Large ($16B),,,,"Ultra-pure materials, specialty chemicals",,,,,,ENTG,
+Applied Materials,,,5/10,Mega ($150B),,,,Advanced materials deposition,,,,,,AMAT,
+American Elements,,,7/10,Private,,,,"Specialty materials (niobium, sapphire substrates)",,,,,,PRIVATE,
+IonQ,,,10/10,Small ($2.5B),,,,Trapped-ion quantum computers,,,,,,IONQ,
+Rigetti Computing,,,10/10,Small ($500M),,,,Superconducting quantum computers,,,,,,RGTI,
+D-Wave Quantum,,,10/10,Small ($350M),,,,Quantum annealing systems,,,,,,QBTS,
+IBM,,,6/10,Mega ($180B),,,,Superconducting quantum (diversified),,,,,,IBM,
+Alphabet,,,4/10,Mega ($1.9T),,,,Superconducting quantum (diversified),,,,,,GOOG,
+Honeywell (Quantinuum),,,5/10,Mega ($145B),,,,Trapped-ion quantum (54.5% ownership),,,,,,HON,
+Oxford Instruments,,,8/10,Mid ($2B),,,,"Dilution refrigerators, cryogenics",,,,,,OXINF,
+Microsoft,,,4/10,Mega ($3T),,,,"Azure Quantum, Q# development",,,,,,MSFT,
+Amazon,,,3/10,Mega ($2T),,,,AWS Braket quantum cloud,,,,,,AMZN,
+Accenture,,,3/10,Mega ($220B),,,,"Quantum consulting, enterprise integration",,,,,,ACN,
+Leidos,,,4/10,Large ($20B),,,,Government quantum consulting,,,,,,LDOS,
+Science Applications,,,4/10,Mid ($7B),,,,Defense quantum applications,,,,,,SAIC,
+Keysight Technologies,,,7/10,Large ($28B),,,,"Quantum control electronics, measurement",,,,,,KEYS,
+FormFactor,,,7/10,Mid ($3B),,,,Cryogenic probe systems,,,,,,FORM,
+Zurich Instruments (Private),,,9/10,Private,,,,Quantum control systems,,,,,,ZBRA,
+Coherent Corp,,,6/10,Mid ($7B),,,,"Lasers for ion-trap, photonic quantum",,,,,,COHR,
+(Now Coherent),,,6/10,-,,,,Optical components,,,,,,II-VI,
+Lumentum,,,5/10,Mid ($4B),,,,"Photonic components, lasers",,,,,,LITE,
+CrowdStrike/Palo Alto,Current,,,,,5,,,,-15%,+30-50% (24mo),,Post-quantum cryptography beneficiaries; near-term revenue catalyst,CRWD/PANW,
+Defiance Quantum ETF,,,,,,,Broad market correlation,,,,,,"High expense ratio, holds non-quantum stocks, diluted exposure",QTUM,
+Various,,,,,,,Some may get acquired,,,,,,Many lack fundamental technology differentiation,QUANTUM SPACS,
+PsiQuantum,,IPO filing—potential high-impact debut,,,High,,,,,,,Pre-IPO watch,,PRIVATE: PSIQUANTUM,
+Quantinuum,,IPO/SPAC announcement,,,High,,,,,,,IPO watch,,PRIVATE: QUANTINUUM,
+Atom Computing,,"Funding round, potential IPO",,,Medium,,,,,,,Neutral atom watch,,PRIVATE: ATOM COMPUTING,
+NVIDIA,,,,,,,,,,,,,,NVDA,GPU clusters remain the dominant high-performance computing platform; enterprises redirect quantum budgets to proven AI accelerators
+Palantir,,,,,,,,,,,,,,PLTR,Classical optimization software for defense/enterprise solidifies position; no quantum disruption to business model
+AMD,,,,,,,,,,,,,,AMD,Data center CPUs/GPUs capture workloads that quantum promised but couldn't deliver
+Cloudflare,,,,,,,,,,,,,,NET,"Classical cryptography remains sufficient longer; PQC migration urgency evaporates, protecting existing security moats"
+CrowdStrike,,,,,,,,,,,,,,CRWD,"Cybersecurity incumbents don't face ""cryptographic apocalypse"" forcing architecture rewrites; existing solutions remain relevant"
+Cisco,,,,,,,,,,,,,,CSCO,Networking infrastructure doesn't require quantum-safe overhaul; capex cycles normalize
+N/A,,,,,,,,,text_extraction,,,,,UK,
+N/A,,,,,,,,,text_extraction,,,,,US,
+N/A,,,,,,,,,text_extraction,,,,,XLI,
+N/A,,,,,,,,,text_extraction,,,,,DASTY,
+N/A,,,,,,,,,text_extraction,,,,,ALTR,

@@ -14,6 +14,7 @@ from ..utils.markdown_generator import MarkdownGenerator
 from ..utils.watchlist_manager import WatchlistManager
 from ..utils.finnhub_client import FinnhubClient
 from ..utils.tavily_client import TavilyClient
+from ..utils.source_tracker import SourceTracker
 from ..analysis.shortage_analyzer import ShortageAnalyzer, analyze_bottlenecks
 from ..analysis.valuation_checker import ValuationChecker, check_valuations
 from ..analysis.demand_analyzer import DemandAnalyzer, analyze_demand
@@ -432,6 +433,7 @@ class ExploreAgent(BaseAgent):
         self.finnhub_client = finnhub_client or FinnhubClient()
         self.tavily_client = tavily_client or TavilyClient()
         self.enable_cache = enable_cache
+        self.source_tracker = SourceTracker()
         
         # Ensure cache directory exists
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -521,6 +523,7 @@ Craft specific, targeted queries for best results.""",
             # Check cache first
             cached = self._get_cached_search(query)
             if cached:
+                self.source_tracker.add_cache_source(query)
                 return f"[Cached search results for: {query}]\n{cached}"
 
             # Try Tavily first
@@ -536,6 +539,10 @@ Craft specific, targeted queries for best results.""",
                         results = self.tavily_client.search(query, max_results=10)
 
                     if results and results.get('results'):
+                        # Track Tavily sources
+                        for result in results.get('results', []):
+                            self.source_tracker.add_tavily_source(query, result)
+                        
                         formatted = self.tavily_client.format_results_as_text(results)
                         self._save_to_cache(query, formatted)
                         return f"[Tavily search results for: {query}]\n{formatted}"
@@ -560,6 +567,9 @@ Craft specific, targeted queries for best results.""",
         Returns:
             Path to the generated research document
         """
+        # Clear any previous sources for this research generation
+        self.source_tracker.clear()
+        
         user_prompt = EXPLORE_USER_PROMPT_TEMPLATE.format(
             query=query,
             depth=depth,
@@ -633,6 +643,15 @@ Craft specific, targeted queries for best results.""",
         if contrarian_section:
             content += contrarian_section
 
+        # Add Anthropic knowledge as a source since we use Claude for analysis
+        self.source_tracker.add_anthropic_knowledge_source(query)
+        
+        # Add sources section
+        logger.info(f"Adding sources section with {len(self.source_tracker)} sources...")
+        sources_section = self.source_tracker.generate_sources_section()
+        if sources_section:
+            content += sources_section
+
         # Add research metadata section
         content += self._generate_research_metadata(query, depth, tool_results)
         
@@ -699,6 +718,9 @@ Craft specific, targeted queries for best results.""",
         Returns:
             Path to the generated follow-up research document
         """
+        # Clear any previous sources for this research generation
+        self.source_tracker.clear()
+        
         # Load original research
         original_path = Path(original_research_path)
         if not original_path.exists():
@@ -796,6 +818,14 @@ Use web search to gather current information relevant to the follow-up question.
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         original_stem = original_path.stem
         followup_theme = f"{original_stem}_followup_{timestamp}"
+
+        # Add Anthropic knowledge as a source since we use Claude for analysis
+        self.source_tracker.add_anthropic_knowledge_source(question)
+        
+        # Add sources section
+        sources_section = self.source_tracker.generate_sources_section()
+        if sources_section:
+            content += sources_section
 
         # Generate the research document
         metadata = {
@@ -1035,6 +1065,10 @@ Use web search to gather current information relevant to the follow-up question.
 
         if not market_data:
             return ""
+
+        # Track Finnhub sources for successful data retrieval
+        for ticker in market_data.keys():
+            self.source_tracker.add_finnhub_source(ticker, 'market_data')
 
         # Build enhanced market data tables
         lines = [
