@@ -20,10 +20,10 @@
             <h2>Hit Rate</h2>
         </div>
         <div class="text-center">
-            <div class="text-3xl font-bold {% if stats['hit_rate_pct'] >= 60 %}text-success{% elif stats['hit_rate_pct'] >= 40 %}text-warning{% else %}text-danger{% endif %}">
-                {{ stats['hit_rate_pct'] }}%
+            <div class="text-3xl font-bold {% if stats.get('hit_rate_pct', 0) >= 60 %}text-success{% elif stats.get('hit_rate_pct', 0) >= 40 %}text-warning{% else %}text-danger{% endif %}">
+                {{ stats.get('hit_rate_pct', 0) }}%
             </div>
-            <div class="text-sm text-muted">{{ stats['success_count'] }}/{{ stats['total_theses'] }} successful</div>
+            <div class="text-sm text-muted">{{ stats.get('success_count', 0) }}/{{ stats.get('total_theses', 0) }} successful</div>
         </div>
     </div>
     
@@ -32,10 +32,10 @@
             <h2>Average Return</h2>
         </div>
         <div class="text-center">
-            <div class="text-3xl font-bold {% if stats['avg_return_pct'] > 0 %}text-success{% else %}text-danger{% endif %}">
-                {{ "+" if stats['avg_return_pct'] > 0 else "" }}{{ stats['avg_return_pct'] }}%
+            <div class="text-3xl font-bold {% if stats.get('avg_return_pct', 0) > 0 %}text-success{% else %}text-danger{% endif %}">
+                {{ "+" if stats.get('avg_return_pct', 0) > 0 else "" }}{{ stats.get('avg_return_pct', 0) }}%
             </div>
-            <div class="text-sm text-muted">{{ stats['concluded_count'] }} completed theses</div>
+            <div class="text-sm text-muted">{{ stats.get('concluded_count', 0) }} completed theses</div>
         </div>
     </div>
     
@@ -44,7 +44,7 @@
             <h2>Active Tracking</h2>
         </div>
         <div class="text-center">
-            <div class="text-3xl font-bold text-info">{{ stats['pending_count'] }}</div>
+            <div class="text-3xl font-bold text-info">{{ stats.get('pending_count', 0) }}</div>
             <div class="text-sm text-muted">theses being monitored</div>
         </div>
     </div>
@@ -60,23 +60,23 @@
             <tbody>
                 <tr>
                     <td><span class="badge badge-success">✅ Successful</span></td>
-                    <td class="text-right">{{ stats['success_count'] }}</td>
+                    <td class="text-right">{{ stats.get('success_count', 0) }}</td>
                 </tr>
                 <tr>
                     <td><span class="badge badge-danger">❌ Failed</span></td>
-                    <td class="text-right">{{ stats['failure_count'] }}</td>
+                    <td class="text-right">{{ stats.get('failure_count', 0) }}</td>
                 </tr>
                 <tr>
                     <td><span class="badge badge-warning">⚠️ Mixed</span></td>
-                    <td class="text-right">{{ stats['mixed_count'] }}</td>
+                    <td class="text-right">{{ stats.get('mixed_count', 0) }}</td>
                 </tr>
                 <tr>
                     <td><span class="badge badge-info">🔄 Pending</span></td>
-                    <td class="text-right">{{ stats['pending_count'] }}</td>
+                    <td class="text-right">{{ stats.get('pending_count', 0) }}</td>
                 </tr>
                 <tr>
                     <td><span class="badge badge-neutral">⏰ Expired</span></td>
-                    <td class="text-right">{{ stats['expired_count'] }}</td>
+                    <td class="text-right">{{ stats.get('expired_count', 0) }}</td>
                 </tr>
             </tbody>
         </table>
@@ -88,15 +88,15 @@
         </div>
         <dl>
             <dt>Total Theses Tracked</dt>
-            <dd>{{ stats['total_theses'] }}</dd>
+            <dd>{{ stats.get('total_theses', 0) }}</dd>
             <dt>Research Quality Score</dt>
             <dd>
-                {% if stats['hit_rate_pct'] >= 70 %}
-                    <span class="badge badge-success">Excellent ({{ stats['hit_rate_pct'] }}%)</span>
-                {% elif stats['hit_rate_pct'] >= 50 %}
-                    <span class="badge badge-warning">Good ({{ stats['hit_rate_pct'] }}%)</span>
+                {% if stats.get('hit_rate_pct', 0) >= 70 %}
+                    <span class="badge badge-success">Excellent ({{ stats.get('hit_rate_pct', 0) }}%)</span>
+                {% elif stats.get('hit_rate_pct', 0) >= 50 %}
+                    <span class="badge badge-warning">Good ({{ stats.get('hit_rate_pct', 0) }}%)</span>
                 {% else %}
-                    <span class="badge badge-danger">Needs Improvement ({{ stats['hit_rate_pct'] }}%)</span>
+                    <span class="badge badge-danger">Needs Improvement ({{ stats.get('hit_rate_pct', 0) }}%)</span>
                 {% endif %}
             </dd>
             <dt>Tracking Since</dt>

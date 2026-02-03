@@ -447,7 +447,17 @@ class HistoricalTracker:
         """
         total_theses = len(self.theses)
         if total_theses == 0:
-            return {'total': 0}
+            return {
+                'total_theses': 0,
+                'hit_rate_pct': 0.0,
+                'success_count': 0,
+                'failure_count': 0,
+                'mixed_count': 0,
+                'pending_count': 0,
+                'expired_count': 0,
+                'avg_return_pct': 0.0,
+                'concluded_count': 0
+            }
         
         # Count outcomes
         outcomes = {'success': 0, 'failure': 0, 'mixed': 0, 'pending': 0, 'expired': 0}
